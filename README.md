@@ -1,5 +1,7 @@
 # Rego Test Runner for VS Code
 
+🚧 Work in progress 🚧
+
 Run [Rego tests](https://www.openpolicyagent.org/docs/latest/policy-testing/) for [Open Policy Agent](https://www.openpolicyagent.org) within VS Code.
 
 ## Features
@@ -12,9 +14,7 @@ This plugin requires the [Open Policy Agent](https://github.com/open-policy-agen
 
 ### Installation
 
-Install with:
-
-[ ] To install the extension, visit the Visual Studio Code Marketplace or search for "Rego Test Runner" in the 'Extensions' panel.
+* [ ] To install the extension, visit the Visual Studio Code Marketplace or search for "Rego Test Runner" in the 'Extensions' panel.
 
 ## Configuration
 
