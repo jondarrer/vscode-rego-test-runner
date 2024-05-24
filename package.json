@@ -1,0 +1,47 @@
+{
+  "name": "vscode-rego-test-runner",
+  "displayName": "Rego Test Runner for VS Code",
+  "description": "Run Rego tests for Open Policy Agent within VS Code",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.89.0"
+  },
+  "activationEvents": [
+    "workspaceContains:**/*.rego"
+  ],
+  "categories": [
+    "Testing"
+  ],
+  "keywords": [
+    "open policy agent",
+    "opa",
+    "rego",
+    "policy"
+  ],
+  "preview": true,
+  "main": "./out/extension.js",
+  "scripts": {
+    "compile": "tsc -p ./",
+    "lint": "eslint src --ext ts",
+    "pretest": "npm run compile && npm run lint",
+    "test": "node --test ./out/test",
+    "vscode:prepublish": "npm run compile",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "20.12.12",
+    "@types/vscode": "^1.89.0",
+    "@typescript-eslint/eslint-plugin": "^7.10.0",
+    "@typescript-eslint/parser": "^7.10.0",
+    "@vscode/test-cli": "^0.0.9",
+    "@vscode/test-electron": "^2.3.10",
+    "eslint": "^9.3.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5"
+  },
+  "icon": "logo.png",
+  "galleryBanner": {
+    "color": "#b8b8b8",
+    "theme": "light"
+  }
+}

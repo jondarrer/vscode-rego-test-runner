@@ -1,2 +1,56 @@
-# vscode-rego-test-runner
-Run Rego tests for Open Policy Agent within VS Code
+# Rego Test Runner for VS Code
+
+Run [Rego tests](https://www.openpolicyagent.org/docs/latest/policy-testing/) for [Open Policy Agent](https://www.openpolicyagent.org) within VS Code.
+
+## Features
+
+Simple way to run OPA Rego tests from within VS Code.
+
+## Requirements
+
+This plugin requires the [Open Policy Agent](https://github.com/open-policy-agent/opa) executable (`opa`) to be installed in your $PATH.
+
+### Installation
+
+Install with:
+
+[ ] To install the extension, visit the Visual Studio Code Marketplace or search for "Rego Test Runner" in the 'Extensions' panel.
+
+## Configuration
+
+| Field | Default | Description |
+| ----- | ------- | ----------- |
+| `regoTest.roots` | `[${workspaceFolder}]` | List of folders to load as policy tests |
+| `regoTest.testFilePatterns` | `["**/*_test.rego"]` | List of patterns which identify files as policy tests |
+
+## Planned features
+
+* [ ] Automatic test discovery
+* [ ] Run all tests together
+* [ ] Run all tests within a file
+* [ ] Run tests individually
+* [ ] Run individual tests directly from within the test file
+* [ ] Erroring test output surfacing
+* [ ] View test output in Rego Tests output channel
+
+## Other feature ideas
+* [ ] Failed test output surfacing (when tests are written with [rego-test-assertions](https://github.com/anderseknert/rego-test-assertions))
+* [ ] Code coverage
+
+## [CHANGELOG](./CHANGELOG.md)
+
+## Development
+
+### Testing
+
+Run the tests with the usual command:
+
+```sh
+npm test
+```
+
+This will run the tests with a coverage report (requires 100% across the board to pass), which you can view with:
+
+```sh
+open coverage/lcov-report/index.html
+```
