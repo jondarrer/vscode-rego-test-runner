@@ -35,7 +35,7 @@
     "compile": "tsc -p ./",
     "lint": "eslint src --ext ts",
     "pretest": "npm run compile && npm run lint",
-    "test": "node --test ./out/test",
+    "test": "node --test ./out",
     "vscode:prepublish": "npm run compile",
     "watch": "tsc -watch -p ./"
   },
@@ -52,7 +52,7 @@
     "prettier": "^3.2.5",
     "typescript": "^5.4.5"
   },
-  "icon": "logo.png",
+  "icon": "logo.jpeg",
   "galleryBanner": {
     "color": "#b8b8b8",
     "theme": "light"
