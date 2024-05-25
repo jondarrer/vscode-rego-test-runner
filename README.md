@@ -54,3 +54,7 @@ This will run the tests with a coverage report (requires 100% across the board t
 ```sh
 open coverage/lcov-report/index.html
 ```
+
+### Debugging
+
+Run the `Run Extension` task in VS Code to debug the extension.
