@@ -67,6 +67,11 @@ export interface IUri {
 }
 
 /**
+ * A relative pattern is a helper to construct glob patterns that are matched relatively to a base file path. The base path can either be an absolute file path as string or uri or a workspace folder, which is the preferred way of creating the relative pattern.
+ */
+export interface IRelativePattern {}
+
+/**
  * A file glob pattern to match file paths against. This can either be a glob pattern string (like **​/*.{ts,js} or *.{ts,js}) or a relative pattern.
  *
  * Glob patterns can have the following syntax:
@@ -80,9 +85,7 @@ export interface IUri {
  *
  * Note: a backslash (\) is not valid within a glob pattern. If you have an existing file path to match against, consider to use the relative pattern support that takes care of converting any backslash into slash. Otherwise, make sure to convert any backslash to slash when creating the glob pattern.
  */
-export interface IGlobPattern {}
-
-export interface IThenable<Type> {}
+export type GlobPatternType = string | IRelativePattern;
 
 /**
  * Find files across all workspace folders in the workspace.
@@ -100,5 +103,5 @@ export interface IThenable<Type> {}
  * A thenable that resolves to an array of resource identifiers. Will return no results if no workspace folders are opened.
  */
 export interface FindFilesFunc {
-  (pattern: string): IThenable<IUri>;
+  (pattern: string): Thenable<IUri[]>;
 }

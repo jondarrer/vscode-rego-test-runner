@@ -1,7 +1,7 @@
 import { afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { ITestController, ITestItem, ITextDocument, IUri } from './types';
-import { registerTestItemFile, updateWorkspaceTestFile } from './helpers';
+import { FindFilesFunc, ITestController, ITestItem, ITextDocument, IUri } from './types';
+import { refreshTestFiles, registerTestItemFile, updateWorkspaceTestFile } from './helpers';
 
 const add = mock.fn((item: ITestItem): void => {});
 const get = mock.fn((itemId: string): ITestItem | undefined => undefined);
@@ -101,5 +101,27 @@ describe('updateWorkspaceTestFile', () => {
 
     // Assert
     assert.ok(result);
+  });
+});
+
+describe('refreshTestFiles', () => {
+  it('returns a list of TestItems for test files', async () => {
+    // Arrange
+    const other: IUri = {
+      scheme: 'file',
+      path: '/path/to/test/two/other_test.rego',
+      toString: (): string => `file:///path/to/test/two/other_test.rego`,
+    };
+    const pattern = '**/*_test.rego';
+    const findFiles: FindFilesFunc = mock.fn(async (pattern: string): Promise<IUri[]> => {
+      return [uri, other];
+    });
+
+    // Act
+    const result = await refreshTestFiles(controller, pattern, findFiles);
+
+    // Assert
+    assert.ok(result);
+    assert.strictEqual(result.length, 2);
   });
 });
