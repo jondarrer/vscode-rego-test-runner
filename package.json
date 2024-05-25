@@ -34,8 +34,8 @@
   "scripts": {
     "compile": "tsc -p ./",
     "lint": "eslint src --ext ts",
-    "pretest": "npm run compile && npm run lint",
-    "test": "node --test ./out",
+    "pretest": "npm run compile",
+    "test": "node --test",
     "vscode:prepublish": "npm run compile",
     "watch": "tsc -watch -p ./"
   },
@@ -50,6 +50,7 @@
     "husky": "^9.0.11",
     "lint-staged": "^15.2.4",
     "prettier": "^3.2.5",
+    "tsx": "^4.11.0",
     "typescript": "^5.4.5"
   },
   "icon": "logo.jpeg",
