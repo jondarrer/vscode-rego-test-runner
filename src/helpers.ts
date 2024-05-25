@@ -15,7 +15,20 @@ export const handleRunRequest = (
   cancellation: ICancellationToken
 ) => {};
 
-export const updateWorkspaceTestFile = (controller: ITestController, document: ITextDocument) => {};
+export const updateWorkspaceTestFile = (
+  controller: ITestController,
+  document: ITextDocument
+): ITestItem | undefined => {
+  if (document.uri.scheme !== 'file') {
+    return;
+  }
+
+  if (!document.uri.path.endsWith('_test.rego')) {
+    return;
+  }
+
+  return registerTestItemFile(controller, document.uri);
+};
 
 export const registerTestItemFile = (controller: ITestController, uri: IUri): ITestItem => {
   const existing = controller.items.get(uri.toString());

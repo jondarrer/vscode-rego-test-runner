@@ -39,7 +39,17 @@ export interface ITestRunRequest {}
 
 export interface ICancellationToken {}
 
-export interface ITextDocument {}
+export interface ITextDocument {
+  /**
+   * The associated uri for this document.
+   *
+   * Note that most documents use the file-scheme, which means they are files on disk. However, not all documents are saved on disk and therefore the scheme must be checked before trying to access the underlying file or siblings on disk.
+   *
+   * @see — FileSystemProvider
+   * @see — TextDocumentContentProvider
+   */
+  uri: IUri;
+}
 
 export interface IUri {
   /**
