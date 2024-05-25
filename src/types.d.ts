@@ -102,6 +102,6 @@ export type GlobPatternType = string | IRelativePattern;
  * @returns
  * A thenable that resolves to an array of resource identifiers. Will return no results if no workspace folders are opened.
  */
-export interface FindFilesFunc {
+export interface IFindFilesFunc {
   (pattern: string): Thenable<IUri[]>;
 }

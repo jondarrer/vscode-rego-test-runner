@@ -1,5 +1,5 @@
 import {
-  FindFilesFunc,
+  IFindFilesFunc,
   ICancellationToken,
   GlobPatternType,
   ITestController,
@@ -44,7 +44,7 @@ export const registerTestItemFile = (controller: ITestController, uri: IUri): IT
 export const refreshTestFiles = async (
   controller: ITestController,
   pattern: string,
-  findFiles: FindFilesFunc
+  findFiles: IFindFilesFunc
 ): Promise<ITestItem[]> => {
   return (await findFiles(pattern)).map((uri) => registerTestItemFile(controller, uri));
 };
