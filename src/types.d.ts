@@ -72,6 +72,36 @@ export interface IUri {
 export interface IRelativePattern {}
 
 /**
+ * A range represents an ordered pair of two positions. It is guaranteed that start.isBeforeOrEqual(end)
+ *
+ * Range objects are immutable. Use the with, intersection, or union methods to derive new ranges from an existing range.
+ */
+export interface IRange {
+  start: IPosition;
+  end: IPosition;
+}
+
+export interface IRangeConstructable {
+  new (start: IPosition, end: IPosition): IRange;
+}
+
+/**
+ * Represents a line and character position, such as the position of the cursor.
+ *
+ * Position objects are immutable. Use the with or translate methods to derive new positions from an existing position.
+ * @param line — A zero-based line value.
+ * @param character — A zero-based character value.
+ */
+export interface IPosition {
+  line: number;
+  character: number;
+}
+
+export interface IPositionConstructable {
+  new (line: number, character: number): IPosition;
+}
+
+/**
  * A file glob pattern to match file paths against. This can either be a glob pattern string (like **​/*.{ts,js} or *.{ts,js}) or a relative pattern.
  *
  * Glob patterns can have the following syntax:
@@ -104,4 +134,8 @@ export type GlobPatternType = string | IRelativePattern;
  */
 export interface IFindFilesFunc {
   (pattern: string): Thenable<IUri[]>;
+}
+
+export interface IOnTestHanderFunc {
+  (testName: string, range: IRange): void;
 }
