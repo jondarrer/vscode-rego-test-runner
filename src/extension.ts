@@ -18,4 +18,17 @@ export async function activate(context: vscode.ExtensionContext) {
     undefined,
     true
   );
+
+  // Discover tests by going through documents the editor is
+  // currently aware of. This appears to only get the currently
+  // focused document.
+  for (const document of vscode.workspace.textDocuments) {
+    updateWorkspaceTestFile(controller, document);
+  }
+
+  // Respond to document changes, whether editing or creation
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument((document) => updateWorkspaceTestFile(controller, document)),
+    vscode.workspace.onDidChangeTextDocument((event) => updateWorkspaceTestFile(controller, event.document))
+  );
 }
