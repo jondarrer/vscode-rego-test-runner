@@ -1,23 +1,9 @@
 import { afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { IPosition, IRange } from './types';
+import { IRange } from './types';
 import { regoTestFileParser } from './rego-test-file-parser';
 
 const onTestHandler = mock.fn((testName: string, range: IRange): void => {});
-
-class Range implements IRange {
-  constructor(
-    public start: IPosition,
-    public end: IPosition
-  ) {}
-}
-
-class Position implements IPosition {
-  constructor(
-    public line: number,
-    public character: number
-  ) {}
-}
 
 afterEach(() => {
   mock.reset();
@@ -29,7 +15,7 @@ describe('regoTestFileParser', () => {
     const content = '';
 
     // Act
-    regoTestFileParser(content, onTestHandler, Range, Position);
+    regoTestFileParser(content, onTestHandler);
 
     // Assert
     assert.strictEqual(onTestHandler.mock.calls.length, 0);
@@ -41,7 +27,7 @@ describe('regoTestFileParser', () => {
 import rego.v1`;
 
     // Act
-    regoTestFileParser(content, onTestHandler, Range, Position);
+    regoTestFileParser(content, onTestHandler);
 
     // Assert
     assert.strictEqual(onTestHandler.mock.calls.length, 0);
@@ -55,7 +41,7 @@ import rego.v1
 import data.sample`;
 
     // Act
-    regoTestFileParser(content, onTestHandler, Range, Position);
+    regoTestFileParser(content, onTestHandler);
 
     // Assert
     assert.strictEqual(onTestHandler.mock.calls.length, 0);
@@ -88,7 +74,7 @@ not_a_test_either if {
 }`;
 
     // Act
-    regoTestFileParser(content, onTestHandler, Range, Position);
+    regoTestFileParser(content, onTestHandler);
 
     // Assert
     assert.strictEqual(onTestHandler.mock.calls.length, 3);

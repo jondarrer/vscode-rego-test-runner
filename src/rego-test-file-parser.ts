@@ -1,13 +1,9 @@
-import { IOnTestHanderFunc, IPositionConstructable, IRange, IRangeConstructable } from './types';
+import { Position, Range } from './classes';
+import { IOnTestHanderFunc, IRange } from './types';
 
 const TEST_BLOCK_REGEX = /^(test_\w*)/;
 
-export const regoTestFileParser = (
-  content: string,
-  onTestHandler: IOnTestHanderFunc,
-  Range: IRangeConstructable,
-  Position: IPositionConstructable
-): void => {
+export const regoTestFileParser = (content: string, onTestHandler: IOnTestHanderFunc): void => {
   const lines = content.split('\n');
 
   for (let i = 0; i < lines.length; i++) {

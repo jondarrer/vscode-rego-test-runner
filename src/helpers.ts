@@ -1,13 +1,19 @@
+import { regoTestFileParser } from './rego-test-file-parser';
 import {
   IFindFilesFunc,
   ICancellationToken,
-  GlobPatternType,
   ITestController,
   ITestItem,
   ITestRunRequest,
   ITextDocument,
   IUri,
+  ITestItemCollection,
+  IOnTestHanderFunc,
+  IRange,
+  IReadFileFunc,
 } from './types';
+
+const textDecoder = new TextDecoder('utf-8');
 
 export const handleRunRequest = (
   controller: ITestController,
@@ -41,10 +47,42 @@ export const registerTestItemFile = (controller: ITestController, uri: IUri): IT
   return item;
 };
 
+export const registerTestItemCasesFromFile = (
+  controller: ITestController,
+  item: ITestItem,
+  content: string
+): ITestItemCollection => {
+  const children: ITestItem[] = [];
+
+  const onTestHandler: IOnTestHanderFunc = (testName: string, range: IRange): void => {
+    const id = `${item.uri}/${testName}`;
+    const testCase = controller.createTestItem(id, testName, item.uri);
+    testCase.range = range;
+    children.push(testCase);
+  };
+
+  regoTestFileParser(content, onTestHandler);
+
+  item.children.replace(children);
+
+  return item.children;
+};
+
 export const refreshTestFiles = async (
   controller: ITestController,
   pattern: string,
-  findFiles: IFindFilesFunc
+  findFiles: IFindFilesFunc,
+  readFile: IReadFileFunc
 ): Promise<ITestItem[]> => {
-  return (await findFiles(pattern)).map((uri) => registerTestItemFile(controller, uri));
+  return Promise.all(
+    (await findFiles(pattern)).map(async (uri) => {
+      const item = registerTestItemFile(controller, uri);
+
+      const rawContent = await readFile(uri);
+      const content = textDecoder.decode(rawContent);
+      const children = registerTestItemCasesFromFile(controller, item, content);
+
+      return item;
+    })
+  );
 };

@@ -31,9 +31,33 @@ export interface ITestItemCollection {
    * @param item — Item to add.
    */
   add(item: ITestItem): void;
+  /**
+   * Gets the number of items in the collection.
+   */
+  size: number;
+  /**
+   * Replaces the items stored by the collection.
+   * @param items — Items to store.
+   */
+  replace(items: readonly ITestItem[]): void;
 }
 
-export interface ITestItem {}
+export interface ITestItem {
+  /**
+   * The children of this test item. For a test suite, this may contain the individual test cases or nested suites.
+   */
+  children: ITestItemCollection;
+  /**
+   * URI this TestItem is associated with. May be a file or directory.
+   */
+  uri: IUri | undefined;
+  /**
+   * Location of the test item in its uri.
+   *
+   * This is only meaningful if the uri points to a file.
+   */
+  range: IRange | undefined;
+}
 
 export interface ITestRunRequest {}
 
@@ -61,9 +85,54 @@ export interface IUri {
    */
   path: string;
   /**
+   * Authority is the www.example.com part of http://www.example.com/some/path?query#fragment. The part between the first double slashes and the next slash.
+   */
+  authority: string;
+  /**
+   * Query is the query part of http://www.example.com/some/path?query#fragment.
+   */
+  query: string;
+  /**
+   * Fragment is the fragment part of http://www.example.com/some/path?query#fragment.
+   */
+  fragment: string;
+  /**
+   * The string representing the corresponding file system path of this Uri.
+   *
+   * Will handle UNC paths and normalize windows drive letters to lower-case. Also uses the platform specific path separator.
+   *
+   * Will not validate the path for invalid characters and semantics.
+   * Will not look at the scheme of this Uri.
+   * The resulting string shall not be used for display purposes but for disk operations, like readFile et al.
+   * The difference to the path-property is the use of the platform specific path separator and the handling of UNC paths. The sample below outlines the difference:
+   * ```
+   * const u = URI.parse('file://server/c$/folder/file.txt')
+   * u.authority === 'server'
+   * u.path === '/c$/folder/file.txt'
+   * u.fsPath === '\\server\c$\folder\file.txt'
+   * ```
+   */
+  fsPath: string;
+  /**
+   * Derive a new Uri from this Uri.
+   * ```
+   * let file = Uri.parse('before:some/file/path');
+   * let other = file.with({ scheme: 'after' });
+   * assert.ok(other.toString() === 'after:some/file/path');
+   * ```
+   * @param change An object that describes a change to this Uri. To unset components use null or the empty string.
+   * @returns A new Uri that reflects the given change. Will return this Uri if the change is not changing anything.
+   */
+  with(change: { scheme?: string; authority?: string; path?: string; query?: string; fragment?: string }): IUri;
+  /**
    * Returns a string representation of an object.
    */
   toString(): string;
+  /**
+   * Returns a JSON representation of this Uri.
+   * @returns — An object.
+   */
+  toJSON(): any;
 }
 
 /**
@@ -81,10 +150,6 @@ export interface IRange {
   end: IPosition;
 }
 
-export interface IRangeConstructable {
-  new (start: IPosition, end: IPosition): IRange;
-}
-
 /**
  * Represents a line and character position, such as the position of the cursor.
  *
@@ -95,10 +160,6 @@ export interface IRangeConstructable {
 export interface IPosition {
   line: number;
   character: number;
-}
-
-export interface IPositionConstructable {
-  new (line: number, character: number): IPosition;
 }
 
 /**
@@ -134,6 +195,15 @@ export type GlobPatternType = string | IRelativePattern;
  */
 export interface IFindFilesFunc {
   (pattern: string): Thenable<IUri[]>;
+}
+
+/**
+ * Read the entire contents of a file.
+ * @param uri — The uri of the file.
+ * @returns — An array of bytes or a thenable that resolves to such.
+ */
+export interface IReadFileFunc {
+  (uri: IUri): Thenable<Uint8Array>;
 }
 
 export interface IOnTestHanderFunc {

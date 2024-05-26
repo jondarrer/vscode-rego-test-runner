@@ -6,7 +6,7 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(controller);
 
   controller.refreshHandler = async () => {
-    await refreshTestFiles(controller, '**/*_test.rego', vscode.workspace.findFiles);
+    await refreshTestFiles(controller, '**/*_test.rego', vscode.workspace.findFiles, vscode.workspace.fs.readFile);
   };
 
   controller.createRunProfile(
