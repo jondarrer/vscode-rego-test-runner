@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { handleRunRequest, refreshTestFiles, updateWorkspaceTestFile } from './helpers';
 
 export async function activate(context: vscode.ExtensionContext) {
+  const cwd = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0].uri.path;
   const controller = vscode.tests.createTestController('RegoTestController', 'Rego');
   context.subscriptions.push(controller);
 
@@ -13,7 +14,7 @@ export async function activate(context: vscode.ExtensionContext) {
     'Run Tests',
     vscode.TestRunProfileKind.Run,
     (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) =>
-      handleRunRequest(controller, request, cancellation),
+      handleRunRequest(controller, request, cancellation, cwd),
     true,
     undefined,
     true

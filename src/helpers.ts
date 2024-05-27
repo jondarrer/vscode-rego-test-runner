@@ -1,3 +1,4 @@
+import { placeTestsInQueue, runTestQueue } from './queue-tests';
 import { regoTestFileParser } from './rego-test-file-parser';
 import {
   IFindFilesFunc,
@@ -18,8 +19,11 @@ const textDecoder = new TextDecoder('utf-8');
 export const handleRunRequest = (
   controller: ITestController,
   request: ITestRunRequest,
-  cancellation: ICancellationToken
-) => {};
+  cancellation: ICancellationToken,
+  cwd: string | undefined
+) => {
+  startTestRun(controller, request, cwd);
+};
 
 export const updateWorkspaceTestFile = (
   controller: ITestController,
@@ -85,4 +89,17 @@ export const refreshTestFiles = async (
       return item;
     })
   );
+};
+
+export const startTestRun = async (controller: ITestController, request: ITestRunRequest, cwd: string | undefined) => {
+  const testRun = controller.createTestRun(request);
+  const items: ITestItem[] = [];
+
+  controller.items.forEach((item) => {
+    item.children.forEach((child) => items.push(child));
+    items.push(item);
+  });
+
+  const queue = placeTestsInQueue(items, request, testRun);
+  await runTestQueue(testRun, queue, cwd);
 };

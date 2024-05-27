@@ -1,3 +1,4 @@
+// Interfaces mostly derived from vscode.*, which allow for unit testing with native node --test.
 export interface ITestController {
   /**
    * A collection of "top-level" TestItem instances, which can in turn have their own children to form the "test tree."
@@ -17,6 +18,17 @@ export interface ITestController {
    * @param uri — URI this TestItem is associated with. May be a file or directory.
    */
   createTestItem(id: string, label: string, uri?: IUri): ITestItem;
+  /**
+   * Creates a TestRun. This should be called by the TestRunProfile when a request is made to execute tests, and may also be called if a test run is detected externally. Once created, tests that are included in the request will be moved into the queued state.
+   *
+   * All runs created using the same request instance will be grouped together. This is useful if, for example, a single suite of tests is run on multiple platforms.
+   *
+   * @param request Test run request. Only tests inside the include may be modified, and tests in its exclude are ignored.
+   * @param name The human-readable name of the run. This can be used to disambiguate multiple sets of results in a test run. It is useful if tests are run across multiple platforms, for example.
+   * @param persist Whether the results created by the run should be persisted in the editor. This may be false if the results are coming from a file already saved externally, such as a coverage information file.
+   * @returns An instance of the TestRun. It will be considered "running" from the moment this method is invoked until TestRun.end is called.
+   */
+  createTestRun(request: ITestRunRequest, name?: string, persist?: boolean): ITestRun;
 }
 
 export interface ITestItemCollection {
@@ -40,6 +52,18 @@ export interface ITestItemCollection {
    * @param items — Items to store.
    */
   replace(items: readonly ITestItem[]): void;
+  /**
+   * Iterate over each entry in this collection.
+   * @param callback — Function to execute for each entry.
+   * @param thisArg — The this context used when invoking the handler function.
+   */
+  forEach(callback: (item: ITestItem, collection: ITestItemCollection) => unknown, thisArg?: any): void;
+  /**
+   * Removes a single test item from the collection.
+   *
+   * @param itemId — Item ID to delete.
+   */
+  delete(itemId: string): void;
 }
 
 export interface ITestItem {
@@ -57,9 +81,58 @@ export interface ITestItem {
    * This is only meaningful if the uri points to a file.
    */
   range: IRange | undefined;
+  /**
+   * Display name describing the test case.
+   */
+  label: string;
+  /**
+   * Identifier for the TestItem. This is used to correlate test results and tests in the document with those in the workspace (test explorer). This cannot change for the lifetime of the TestItem, and must be unique among its parent's direct children.
+   */
+  id: string;
+  /**
+   * Controls whether the item is shown as "busy" in the Test Explorer view. This is useful for showing status while discovering children.
+   *
+   * Defaults to false.
+   */
+  busy: boolean;
+  /**
+   * The parent of this item. It's set automatically, and is undefined top-level items in the TestController.items and for items that aren't yet included in another item's children.
+   */
+  parent: ITestItem | undefined;
+  /**
+   * Tags associated with this test item. May be used in combination with tags, or simply as an organizational feature.
+   */
+  tags: readonly ITestTag[];
+  /**
+   * Indicates whether this test item may have children discovered by resolving.
+   *
+   * If true, this item is shown as expandable in the Test Explorer view and expanding the item will cause TestController.resolveHandler to be invoked with the item.
+   *
+   * Default to false.
+   */
+  canResolveChildren: boolean;
+  /**
+   * Optional error encountered while loading the test.
+   *
+   * Note that this is not a test result and should only be used to represent errors in test discovery, such as syntax errors.
+   */
+  error: string | IMarkdownString | undefined;
 }
 
-export interface ITestRunRequest {}
+export interface ITestRunRequest {
+  /**
+   * An array of tests the user has marked as excluded from the test included in this run; exclusions should apply after inclusions.
+   *
+   * May be omitted if no exclusions were requested. Test controllers should not run excluded tests or any children of excluded tests.
+   */
+  exclude: readonly ITestItem[] | undefined;
+  /**
+   * A filter for specific tests to run. If given, the extension should run all of the included tests and all their children, excluding any tests that appear in TestRunRequest.exclude. If this property is undefined, then the extension should simply run all tests.
+   *
+   * The process of running tests should resolve the children of any test items who have not yet been resolved.
+   */
+  include: readonly ITestItem[] | undefined;
+}
 
 export interface ICancellationToken {}
 
@@ -74,6 +147,59 @@ export interface ITextDocument {
    */
   uri: IUri;
 }
+
+/**
+ * A TestRun represents an in-progress or completed test run and provides methods to report the state of individual tests in the run.
+ */
+export interface ITestRun {
+  /**
+   * Indicates a test has failed. You should pass one or more TestMessages to describe the failure.
+   *
+   * @param test — Test item to update.
+   * @param message — Messages associated with the test failure.
+   * @param duration — How long the test took to execute, in milliseconds.
+   */
+  failed(test: ITestItem, message: ITestMessage | readonly ITestMessage[], duration?: number): void;
+  /**
+   * Indicates a test has passed.
+   *
+   * @param test — Test item to update.
+   * @param duration — How long the test took to execute, in milliseconds.
+   */
+  passed(test: ITestItem, duration?: number): void;
+  /**
+   * Indicates a test is queued for later execution.
+   *
+   * @param test — Test item to update.
+   */
+  enqueued(test: ITestItem): void;
+  /**
+   * Appends raw output from the test runner. On the user's request, the output will be displayed in a terminal. ANSI escape sequences, such as colors and text styles, are supported. New lines must be given as CRLF (\r\n) rather than LF (\n).
+   *
+   * @param output — Output text to append.
+   * @param location Indicate that the output was logged at the given location.
+   * @param test — Test item to associate the output with.
+   */
+  appendOutput(output: string, location?: ILocation, test?: ITestItem): void;
+  /**
+   * Indicates a test has been skipped.
+   *
+   * @param test — Test item to update.
+   */
+  skipped(test: ITestItem): void;
+  /**
+   * Indicates a test has started running.
+   *
+   * @param test — Test item to update.
+   */
+  started(test: ITestItem): void;
+  /**
+   * Signals the end of the test run. Any tests included in the run whose states have not been updated will have their state reset.
+   */
+  end(): void;
+}
+
+export interface ILocation {}
 
 export interface IUri {
   /**
@@ -141,6 +267,11 @@ export interface IUri {
 export interface IRelativePattern {}
 
 /**
+ * Tags can be associated with TestItems and TestRunProfiles. A profile with a tag can only execute tests that include that tag in their TestItem.tags array.
+ */
+export interface ITestTag {}
+
+/**
  * A range represents an ordered pair of two positions. It is guaranteed that start.isBeforeOrEqual(end)
  *
  * Range objects are immutable. Use the with, intersection, or union methods to derive new ranges from an existing range.
@@ -179,6 +310,13 @@ export interface IPosition {
 export type GlobPatternType = string | IRelativePattern;
 
 /**
+ * Creates a new TestMessage instance.
+ */
+export interface ITestMessage {}
+
+export interface IMarkdownString {}
+
+/**
  * Find files across all workspace folders in the workspace.
  *
  * @example
@@ -208,4 +346,16 @@ export interface IReadFileFunc {
 
 export interface IOnTestHanderFunc {
   (testName: string, range: IRange): void;
+}
+
+export interface IOpaTestResult {
+  location: {
+    file: string;
+    row: number;
+    col: number;
+  };
+  package: string;
+  name: string;
+  fail?: boolean;
+  duration: number;
 }

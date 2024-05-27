@@ -1,4 +1,4 @@
-import { Position, Range } from './classes';
+import { Position, Range } from './test-classes';
 import { IOnTestHanderFunc, IRange } from './types';
 
 const TEST_BLOCK_REGEX = /^(test_\w*)/;

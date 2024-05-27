@@ -27,11 +27,12 @@ This plugin requires the [Open Policy Agent](https://github.com/open-policy-agen
 
 * [ ] Automatic test discovery
 * [ ] Run all tests together
-* [ ] Run all tests within a file
-* [ ] Run tests individually
-* [ ] Run individual tests directly from within the test file
+* [x] Run all tests within a file
+* [x] Run tests individually
+* [x] Run individual tests directly from within the test file
 * [ ] Erroring test output surfacing
 * [ ] View test output in Rego Tests output channel
+* [ ] Handle todo tests, those prefixed with `todo_`, but which must be skipped
 
 ## Other feature ideas
 * [ ] Failed test output surfacing (when tests are written with [rego-test-assertions](https://github.com/anderseknert/rego-test-assertions))
