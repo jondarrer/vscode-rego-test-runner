@@ -4,12 +4,13 @@ import { ITestItem, ITestRun, ITestRunRequest } from './types';
 export const runTestQueue = async (testRun: ITestRun, queue: Iterable<ITestItem>, cwd: string | undefined) => {
   for (const item of queue) {
     testRun.appendOutput(`Running ${item.id}\r\n`);
-    // if (testRun.token.isCancellationRequested) {
-    //   testRun.skipped(item);
-    // } else {
-    testRun.started(item);
-    await runTests(item, testRun, cwd);
-    // }
+    if (testRun.token.isCancellationRequested) {
+      testRun.skipped(item);
+    } else {
+      testRun.started(item);
+      await runTests(item, testRun, cwd);
+    }
+    testRun.appendOutput(`Completed ${item.id}\r\n`);
   }
 
   testRun.end();

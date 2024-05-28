@@ -12,6 +12,7 @@ const testRun: ITestRun = {
   skipped: mock.fn(),
   started: mock.fn(),
   end: mock.fn(),
+  token: { isCancellationRequested: false, onCancellationRequested: () => {} },
 };
 
 const fItem1: ITestItem = {

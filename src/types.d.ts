@@ -134,7 +134,18 @@ export interface ITestRunRequest {
   include: readonly ITestItem[] | undefined;
 }
 
-export interface ICancellationToken {}
+export interface ICancellationToken {
+  /**
+   * Is true when the token has been cancelled, false otherwise.
+   */
+  isCancellationRequested: boolean;
+  /**
+   * An Event which fires upon cancellation.
+   */
+  onCancellationRequested: IEvent<any>;
+}
+
+export interface IEvent<Type> {}
 
 export interface ITextDocument {
   /**
@@ -197,6 +208,10 @@ export interface ITestRun {
    * Signals the end of the test run. Any tests included in the run whose states have not been updated will have their state reset.
    */
   end(): void;
+  /**
+   * A cancellation token which will be triggered when the test run is canceled from the UI.
+   */
+  token: ICancellationToken;
 }
 
 export interface ILocation {}

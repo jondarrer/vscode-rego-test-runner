@@ -1,22 +1,23 @@
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
-import { IOpaTestResult, ITestItem, ITestRun, IUri } from './types';
+import { IOpaTestResult, ITestItem, ITestMessage, ITestRun, IUri } from './types';
 import { TestMessage } from './test-classes';
 
 export const executeTests = (
   cwd: string | undefined,
-  relativePath: string | undefined = '.',
+  path: string | undefined = '.',
   scenarioName: string | undefined
 ): ChildProcessWithoutNullStreams => {
   const opaCmdArguments = ['test', '--format=json'];
 
-  if (relativePath) {
-    opaCmdArguments.push(relativePath);
+  if (path) {
+    opaCmdArguments.push(path);
   }
 
   if (scenarioName) {
     opaCmdArguments.push('--run');
     opaCmdArguments.push(scenarioName);
   }
+  console.log(opaCmdArguments);
 
   return spawn('opa', opaCmdArguments, {
     cwd: cwd,
@@ -26,11 +27,13 @@ export const executeTests = (
   });
 };
 
-export const convertResults = (results: string): IOpaTestResult[] | undefined => {
+export const convertResults = (testRun: ITestRun, results: string): IOpaTestResult[] | undefined => {
+  testRun.appendOutput(`convertResults ${results}\r\n`);
   try {
     return JSON.parse(results);
   } catch (error) {
-    console.log(results);
+    testRun.appendOutput(results);
+    testRun.appendOutput((error as Error).message);
     return undefined;
   }
 };
@@ -41,9 +44,7 @@ export const extractResult = (
   scenarioName: string | undefined,
   uri?: IUri
 ): IOpaTestResult | undefined => {
-  return results?.find(
-    (result) => result.name === scenarioName && `${cwd ? cwd : ''}/${result.location.file}` === uri?.path
-  );
+  return results?.find((result) => result.name === scenarioName && result.location.file === uri?.path);
 };
 
 export const runTests = async (
@@ -51,39 +52,82 @@ export const runTests = async (
   testRun: ITestRun,
   cwd: string | undefined
 ): Promise<IOpaTestResult | undefined> => {
+  const start = new Date();
   const scenarioName = item.label;
   let opaTestProcess: ChildProcessWithoutNullStreams;
+  testRun.appendOutput(`runTests ${scenarioName}\r\n`, undefined, item);
 
   return new Promise((resolve, reject) => {
     const opaTestOutput: string[] = [];
+    const opaErrorOutput: string[] = [];
+    let path = item.uri?.path;
+    if (path) {
+      const parts = path.split('/');
+      parts.pop();
+      path = parts?.join('/');
+    }
 
-    opaTestProcess = executeTests(cwd, undefined, scenarioName);
+    opaTestProcess = executeTests(cwd, path, scenarioName);
 
     opaTestProcess.stdout.on('data', (chunk: any) => {
       opaTestOutput.push(chunk.toString());
     });
 
     opaTestProcess.stderr.on('data', (chunk: any) => {
-      const x = 1;
-      // this.log(testRun, chunk);
+      opaErrorOutput.push(chunk.toString());
     });
 
     opaTestProcess.on('close', (code: number | null, signal: NodeJS.Signals | null) => {
-      const results = convertResults(opaTestOutput.join());
-      let actual: IOpaTestResult | undefined;
-      if (results) {
-        actual = extractResult(cwd, results, scenarioName, item.uri);
+      const end = new Date();
+      if (opaErrorOutput.length > 0) {
+        testRun.appendOutput(opaErrorOutput.join(), undefined, item);
       }
-      if (actual && actual.fail === true) {
-        testRun.failed(item, new TestMessage('Failed'), actual.duration / 1000);
-        resolve(actual);
-      } else if (actual) {
-        testRun.passed(item, actual.duration / 1000);
-        resolve(actual);
-      } else {
-        testRun.failed(item, new TestMessage('Unknown'));
-        resolve(actual);
-      }
+
+      const actual = processTestResult(
+        opaTestOutput,
+        opaErrorOutput,
+        end.getTime() - start.getTime(),
+        item,
+        testRun,
+        cwd
+      );
+      resolve(actual);
     });
   });
+};
+
+export const processTestResult = (
+  opaTestOutput: string[],
+  opaErrorOutput: string[],
+  duration: number,
+  item: ITestItem,
+  testRun: ITestRun,
+  cwd: string | undefined
+) => {
+  const messages: ITestMessage[] = [];
+  const scenarioName = item.label;
+  const results = convertResults(testRun, opaTestOutput.join());
+  testRun.appendOutput(`processTestResult:results ${JSON.stringify(results)}\r\n`, undefined, item);
+  testRun.appendOutput(`processTestResult:scenarioName ${scenarioName}\r\n`, undefined, item);
+  testRun.appendOutput(`processTestResult:cwd ${cwd}\r\n`, undefined, item);
+  testRun.appendOutput(`processTestResult:item.uri?.path ${item.uri?.path}\r\n`, undefined, item);
+  if (opaErrorOutput.length > 0) {
+    messages.push(new TestMessage(opaErrorOutput.join()));
+  }
+  let actual: IOpaTestResult | undefined;
+  if (results) {
+    actual = extractResult(cwd, results, scenarioName, item.uri);
+  }
+  if (actual && actual.fail === true) {
+    testRun.appendOutput(`processTestResult:fail ${JSON.stringify(actual)}\r\n`, undefined, item);
+    testRun.failed(item, messages, duration);
+  } else if (actual) {
+    testRun.appendOutput(`processTestResult:pass ${JSON.stringify(actual)}\r\n`, undefined, item);
+    testRun.passed(item, duration);
+  } else {
+    testRun.appendOutput(`processTestResult:fail unknown\r\n`, undefined, item);
+    testRun.failed(item, messages, duration);
+  }
+
+  return actual;
 };
