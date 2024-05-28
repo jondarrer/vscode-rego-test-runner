@@ -55,7 +55,36 @@
   },
   "icon": "logo.jpeg",
   "galleryBanner": {
-    "color": "#b8b8b8",
+    "color": "#7e9299",
     "theme": "light"
+  },
+  "contributes": {
+    "configuration": {
+      "title": "Rego Test Runner",
+      "type": "object",
+      "properties": {
+        "regoTest.policyTestDir": {
+          "type": [
+            "string"
+          ],
+          "scope": "window",
+          "default": ".",
+          "description": "Relative folder from which to load the policy tests"
+        },
+        "regoTest.testFilePatterns": {
+          "type": [
+            "array"
+          ],
+          "scope": "window",
+          "default": [
+            "**/*_test.rego"
+          ],
+          "description": "List of patterns which identify files as policy tests"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "minimatch": "^9.0.4"
   }
 }

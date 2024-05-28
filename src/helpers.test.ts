@@ -62,6 +62,7 @@ const controller: ITestController = {
   createTestRun: mock.fn(),
   items,
 };
+const testFilePatterns = ['**/*_test.rego'];
 
 afterEach(() => {
   mock.reset();
@@ -106,7 +107,7 @@ describe('updateWorkspaceTestFile', () => {
     };
 
     // Act
-    const result = updateWorkspaceTestFile(controller, document);
+    const result = updateWorkspaceTestFile(controller, document, testFilePatterns);
 
     // Assert
     assert.ok(!result);
@@ -118,7 +119,7 @@ describe('updateWorkspaceTestFile', () => {
     };
 
     // Act
-    const result = updateWorkspaceTestFile(controller, document);
+    const result = updateWorkspaceTestFile(controller, document, testFilePatterns);
 
     // Assert
     assert.ok(!result);
@@ -130,7 +131,7 @@ describe('updateWorkspaceTestFile', () => {
     };
 
     // Act
-    const result = updateWorkspaceTestFile(controller, document);
+    const result = updateWorkspaceTestFile(controller, document, testFilePatterns);
 
     // Assert
     assert.ok(result);

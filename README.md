@@ -4,6 +4,8 @@
 
 Run [Rego tests](https://www.openpolicyagent.org/docs/latest/policy-testing/) for [Open Policy Agent](https://www.openpolicyagent.org) within VS Code.
 
+![Exension Demo](./extension-demo.gif)
+
 ## Features
 
 Simple way to run OPA Rego tests from within VS Code.
@@ -20,7 +22,7 @@ This plugin requires the [Open Policy Agent](https://github.com/open-policy-agen
 
 | Field | Default | Description |
 | ----- | ------- | ----------- |
-| `regoTest.roots` | `[${workspaceFolder}]` | List of folders to load as policy tests |
+| `regoTest.policyTestDir` | `${workspaceFolder}` | Relative folder from which to load the policy tests, defaults to the current working directory |
 | `regoTest.testFilePatterns` | `["**/*_test.rego"]` | List of patterns which identify files as policy tests |
 
 ## Planned features

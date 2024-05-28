@@ -3,18 +3,24 @@ import { handleRunRequest, refreshTestFiles, updateWorkspaceTestFile } from './h
 
 export async function activate(context: vscode.ExtensionContext) {
   const cwd = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0].uri.path;
+  const policyTestDir: string = vscode.workspace.getConfiguration('regoTest').get('policyTestDir') || '.';
+  const testFilePatterns: string[] = vscode.workspace.getConfiguration('regoTest').get('testFilePatterns') || [
+    '**/*_test.rego',
+  ];
   const controller = vscode.tests.createTestController('RegoTestController', 'Rego');
   context.subscriptions.push(controller);
 
   controller.refreshHandler = async () => {
-    await refreshTestFiles(controller, '**/*_test.rego', vscode.workspace.findFiles, vscode.workspace.fs.readFile);
+    for (let testFilePattern of testFilePatterns) {
+      await refreshTestFiles(controller, testFilePattern, vscode.workspace.findFiles, vscode.workspace.fs.readFile);
+    }
   };
 
   controller.createRunProfile(
     'Run Tests',
     vscode.TestRunProfileKind.Run,
     (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) =>
-      handleRunRequest(controller, request, cancellation, cwd),
+      handleRunRequest(controller, request, cancellation, cwd, policyTestDir),
     true,
     undefined,
     true
@@ -24,12 +30,16 @@ export async function activate(context: vscode.ExtensionContext) {
   // currently aware of. This appears to only get the currently
   // focused document.
   for (const document of vscode.workspace.textDocuments) {
-    updateWorkspaceTestFile(controller, document);
+    updateWorkspaceTestFile(controller, document, testFilePatterns);
   }
 
   // Respond to document changes, whether editing or creation
   context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument((document) => updateWorkspaceTestFile(controller, document)),
-    vscode.workspace.onDidChangeTextDocument((event) => updateWorkspaceTestFile(controller, event.document))
+    vscode.workspace.onDidOpenTextDocument((document) =>
+      updateWorkspaceTestFile(controller, document, testFilePatterns)
+    ),
+    vscode.workspace.onDidChangeTextDocument((event) =>
+      updateWorkspaceTestFile(controller, event.document, testFilePatterns)
+    )
   );
 }

@@ -1,16 +1,18 @@
+import path from 'path';
+
 import { ChildProcessWithoutNullStreams, spawn } from 'node:child_process';
 import { IOpaTestResult, ITestItem, ITestMessage, ITestRun, IUri } from './types';
 import { TestMessage } from './test-classes';
 
 export const executeTests = (
   cwd: string | undefined,
-  path: string | undefined = '.',
+  policyTestDir: string,
   scenarioName: string | undefined
 ): ChildProcessWithoutNullStreams => {
   const opaCmdArguments = ['test', '--format=json'];
 
   if (path) {
-    opaCmdArguments.push(path);
+    opaCmdArguments.push(policyTestDir);
   }
 
   if (scenarioName) {
@@ -43,13 +45,16 @@ export const extractResult = (
   scenarioName: string | undefined,
   uri?: IUri
 ): IOpaTestResult | undefined => {
-  return results?.find((result) => result.name === scenarioName && result.location.file === uri?.path);
+  return results?.find(
+    (result) => result.name === scenarioName && `${cwd}${path.sep}${result.location.file}` === uri?.path
+  );
 };
 
 export const runTests = async (
   item: ITestItem,
   testRun: ITestRun,
-  cwd: string | undefined
+  cwd: string | undefined,
+  policyTestDir: string
 ): Promise<IOpaTestResult | undefined> => {
   const start = new Date();
   const scenarioName = item.label;
@@ -58,14 +63,8 @@ export const runTests = async (
   return new Promise((resolve, reject) => {
     const opaTestOutput: string[] = [];
     const opaErrorOutput: string[] = [];
-    let path = item.uri?.path;
-    if (path) {
-      const parts = path.split('/');
-      parts.pop();
-      path = parts?.join('/');
-    }
 
-    opaTestProcess = executeTests(cwd, path, scenarioName);
+    opaTestProcess = executeTests(cwd, policyTestDir, scenarioName);
 
     opaTestProcess.stdout.on('data', (chunk: any) => {
       opaTestOutput.push(chunk.toString());

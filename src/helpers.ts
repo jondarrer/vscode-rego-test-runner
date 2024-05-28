@@ -1,3 +1,7 @@
+import path from 'node:path';
+
+import { minimatch } from 'minimatch';
+
 import { placeTestsInQueue, runTestQueue } from './queue-tests';
 import { regoTestFileParser } from './rego-test-file-parser';
 import {
@@ -20,20 +24,22 @@ export const handleRunRequest = (
   controller: ITestController,
   request: ITestRunRequest,
   cancellation: ICancellationToken,
-  cwd: string | undefined
+  cwd: string | undefined,
+  policyTestDir: string
 ) => {
-  startTestRun(controller, request, cwd);
+  startTestRun(controller, request, cwd, policyTestDir);
 };
 
 export const updateWorkspaceTestFile = (
   controller: ITestController,
-  document: ITextDocument
+  document: ITextDocument,
+  testFilePatterns: string[]
 ): ITestItem | undefined => {
   if (document.uri.scheme !== 'file') {
     return;
   }
 
-  if (!document.uri.path.endsWith('_test.rego')) {
+  if (!testFilePatterns.some((testFilePattern) => minimatch(document.uri.path, testFilePattern))) {
     return;
   }
 
@@ -46,7 +52,7 @@ export const registerTestItemFile = (controller: ITestController, uri: IUri): IT
     return existing;
   }
 
-  const item = controller.createTestItem(uri.toString(), uri.path.split('/').pop()!, uri);
+  const item = controller.createTestItem(uri.toString(), uri.path.split(path.sep).pop()!, uri);
   controller.items.add(item);
   return item;
 };
@@ -59,7 +65,7 @@ export const registerTestItemCasesFromFile = (
   const children: ITestItem[] = [];
 
   const onTestHandler: IOnTestHanderFunc = (testName: string, range: IRange): void => {
-    const id = `${item.uri}/${testName}`;
+    const id = `${item.uri}#${testName}`;
     const testCase = controller.createTestItem(id, testName, item.uri);
     testCase.range = range;
     children.push(testCase);
@@ -91,7 +97,12 @@ export const refreshTestFiles = async (
   );
 };
 
-export const startTestRun = async (controller: ITestController, request: ITestRunRequest, cwd: string | undefined) => {
+export const startTestRun = async (
+  controller: ITestController,
+  request: ITestRunRequest,
+  cwd: string | undefined,
+  policyTestDir: string
+) => {
   const testRun = controller.createTestRun(request);
   const items: ITestItem[] = [];
 
@@ -101,5 +112,5 @@ export const startTestRun = async (controller: ITestController, request: ITestRu
   });
 
   const queue = placeTestsInQueue(items, request, testRun);
-  await runTestQueue(testRun, queue, cwd);
+  await runTestQueue(testRun, queue, cwd, policyTestDir);
 };
