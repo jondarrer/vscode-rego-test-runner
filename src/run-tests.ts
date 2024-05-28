@@ -28,7 +28,6 @@ export const executeTests = (
 };
 
 export const convertResults = (testRun: ITestRun, results: string): IOpaTestResult[] | undefined => {
-  testRun.appendOutput(`convertResults ${results}\r\n`);
   try {
     return JSON.parse(results);
   } catch (error) {
@@ -55,7 +54,6 @@ export const runTests = async (
   const start = new Date();
   const scenarioName = item.label;
   let opaTestProcess: ChildProcessWithoutNullStreams;
-  testRun.appendOutput(`runTests ${scenarioName}\r\n`, undefined, item);
 
   return new Promise((resolve, reject) => {
     const opaTestOutput: string[] = [];
@@ -107,10 +105,6 @@ export const processTestResult = (
   const messages: ITestMessage[] = [];
   const scenarioName = item.label;
   const results = convertResults(testRun, opaTestOutput.join());
-  testRun.appendOutput(`processTestResult:results ${JSON.stringify(results)}\r\n`, undefined, item);
-  testRun.appendOutput(`processTestResult:scenarioName ${scenarioName}\r\n`, undefined, item);
-  testRun.appendOutput(`processTestResult:cwd ${cwd}\r\n`, undefined, item);
-  testRun.appendOutput(`processTestResult:item.uri?.path ${item.uri?.path}\r\n`, undefined, item);
   if (opaErrorOutput.length > 0) {
     messages.push(new TestMessage(opaErrorOutput.join()));
   }
@@ -119,13 +113,10 @@ export const processTestResult = (
     actual = extractResult(cwd, results, scenarioName, item.uri);
   }
   if (actual && actual.fail === true) {
-    testRun.appendOutput(`processTestResult:fail ${JSON.stringify(actual)}\r\n`, undefined, item);
     testRun.failed(item, messages, duration);
   } else if (actual) {
-    testRun.appendOutput(`processTestResult:pass ${JSON.stringify(actual)}\r\n`, undefined, item);
     testRun.passed(item, duration);
   } else {
-    testRun.appendOutput(`processTestResult:fail unknown\r\n`, undefined, item);
     testRun.failed(item, messages, duration);
   }
 
