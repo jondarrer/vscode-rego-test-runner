@@ -67,7 +67,7 @@ export class Uri implements IUri {
     this.authority = '';
     this.query = '';
     this.fragment = '';
-    this.fsPath = '';
+    this.fsPath = path;
   }
   toString() {
     return `${this.scheme}://${this.path}`;
@@ -79,6 +79,7 @@ export class Uri implements IUri {
     return {
       scheme: this.scheme,
       path: this.path,
+      fsPath: this.fsPath,
     };
   }
 }

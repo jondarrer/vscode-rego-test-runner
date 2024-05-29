@@ -25,9 +25,10 @@ export const handleRunRequest = (
   request: ITestRunRequest,
   cancellation: ICancellationToken,
   cwd: string | undefined,
-  policyTestDir: string
+  policyTestDir: string,
+  opaCommand: string = 'opa'
 ) => {
-  startTestRun(controller, request, cwd, policyTestDir);
+  startTestRun(controller, request, cwd, policyTestDir, opaCommand);
 };
 
 export const updateWorkspaceTestFile = (
@@ -39,7 +40,7 @@ export const updateWorkspaceTestFile = (
     return;
   }
 
-  if (!testFilePatterns.some((testFilePattern) => minimatch(document.uri.path, testFilePattern))) {
+  if (!testFilePatterns.some((testFilePattern) => minimatch(document.uri.fsPath, testFilePattern))) {
     return;
   }
 
@@ -47,12 +48,12 @@ export const updateWorkspaceTestFile = (
 };
 
 export const registerTestItemFile = (controller: ITestController, uri: IUri): ITestItem => {
-  const existing = controller.items.get(uri.toString());
+  const existing = controller.items.get(uri.fsPath);
   if (existing) {
     return existing;
   }
 
-  const item = controller.createTestItem(uri.toString(), uri.path.split(path.sep).pop()!, uri);
+  const item = controller.createTestItem(uri.fsPath, uri.fsPath.split(path.sep).pop()!, uri);
   controller.items.add(item);
   return item;
 };
@@ -101,7 +102,8 @@ export const startTestRun = async (
   controller: ITestController,
   request: ITestRunRequest,
   cwd: string | undefined,
-  policyTestDir: string
+  policyTestDir: string,
+  opaCommand: string = 'opa'
 ) => {
   const testRun = controller.createTestRun(request);
   const items: ITestItem[] = [];
@@ -112,5 +114,5 @@ export const startTestRun = async (
   });
 
   const queue = placeTestsInQueue(items, request, testRun);
-  await runTestQueue(testRun, queue, cwd, policyTestDir);
+  await runTestQueue(testRun, queue, cwd, policyTestDir, opaCommand);
 };

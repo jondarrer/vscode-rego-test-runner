@@ -1,5 +1,7 @@
 import { afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
+import path from 'node:path';
+
 import {
   IFindFilesFunc,
   IPosition,
@@ -56,7 +58,7 @@ const item: ITestItem = {
   error: undefined,
 };
 const createTestItem = mock.fn((id: string, label: string, uri?: IUri): ITestItem => item);
-const uri = new Uri('file', '/path/to/test/something_test.rego');
+const uri = new Uri('file', `path${path.sep}to${path.sep}test${path.sep}something_test.rego`);
 const controller: ITestController = {
   createTestItem,
   createTestRun: mock.fn(),
@@ -88,7 +90,7 @@ describe('registerTestItemFile', () => {
     assert.ok(result);
     assert.strictEqual(createTestItem.mock.calls.length, 1, 'createTestItem should have been called once');
     assert.deepStrictEqual(createTestItem.mock.calls[0].arguments, [
-      'file:///path/to/test/something_test.rego',
+      `path${path.sep}to${path.sep}test${path.sep}something_test.rego`,
       'something_test.rego',
       uri,
     ]);

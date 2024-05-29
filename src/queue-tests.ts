@@ -1,11 +1,13 @@
 import { runTests } from './run-tests';
+import { TestMessage } from './test-classes';
 import { ITestItem, ITestRun, ITestRunRequest } from './types';
 
 export const runTestQueue = async (
   testRun: ITestRun,
   queue: Iterable<ITestItem>,
   cwd: string | undefined,
-  policyTestDir: string
+  policyTestDir: string,
+  opaCommand: string = 'opa'
 ) => {
   for (const item of queue) {
     testRun.appendOutput(`Running ${item.id}\r\n`);
@@ -13,7 +15,12 @@ export const runTestQueue = async (
       testRun.skipped(item);
     } else {
       testRun.started(item);
-      await runTests(item, testRun, cwd, policyTestDir);
+      try {
+        await runTests(item, testRun, cwd, policyTestDir, opaCommand);
+      } catch (error) {
+        console.log(error);
+        testRun.failed(item, new TestMessage((error as Error).message), 0);
+      }
     }
     testRun.appendOutput(`Completed ${item.id}\r\n`);
   }
@@ -41,7 +48,7 @@ export const placeTestsInQueue = (
     }
 
     // Only deal with actual tests, not files or folders
-    if (!item.uri?.path.endsWith(item.label)) {
+    if (!item.uri?.fsPath.endsWith(item.label)) {
       testRun.enqueued(item);
       queue.push(item);
     }
