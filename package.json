@@ -2,7 +2,7 @@
   "name": "vscode-rego-test-runner",
   "displayName": "Rego Test Runner for VS Code",
   "description": "Run Rego tests for Open Policy Agent within VS Code",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "license": "Apache-2.0",
   "author": "Jonathan Darrer <jonny@jondarrer.me.uk>",
   "homepage": "https://github.com/jondarrer/vscode-rego-test-runner#readme",
