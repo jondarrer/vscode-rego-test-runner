@@ -10,7 +10,7 @@ export const executeTests = (
   cwd: string | undefined,
   policyTestDir: string,
   opaCommand: string = 'opa',
-  scenarioName: string | undefined
+  testId: string | undefined
 ): ChildProcessWithoutNullStreams => {
   const opaCmdArguments = ['test'];
   const opaProcessOptions: SpawnOptionsWithoutStdio = {
@@ -27,9 +27,9 @@ export const executeTests = (
     opaCmdArguments.push(policyTestDir);
   }
 
-  if (scenarioName) {
+  if (testId) {
     opaCmdArguments.push('--run');
-    opaCmdArguments.push(scenarioName);
+    opaCmdArguments.push(testId);
   }
   opaCmdArguments.push('--format=json');
   console.log([cwd, opaCommand, ...opaCmdArguments]);
@@ -48,14 +48,10 @@ export const convertResults = (testRun: ITestRun, results: string): IOpaTestResu
 };
 
 export const extractResult = (
-  cwd: string | undefined,
   results: IOpaTestResult[] | undefined,
-  scenarioName: string | undefined,
-  uri?: IUri
+  testId: string | undefined
 ): IOpaTestResult | undefined => {
-  return results?.find(
-    (result) => result.name === scenarioName && `${cwd}${path.sep}${result.location.file}` === uri?.fsPath
-  );
+  return results?.find((result) => `${result.package}.${result.name}` === `data.${testId}`);
 };
 
 export const runTests = async (
@@ -66,7 +62,7 @@ export const runTests = async (
   opaCommand: string = 'opa'
 ): Promise<IOpaTestResult | undefined> => {
   const start = new Date();
-  const scenarioName = item.label;
+  const testId = item.id;
   let opaTestProcess: ChildProcessWithoutNullStreams;
 
   return new Promise((resolve, reject) => {
@@ -74,7 +70,7 @@ export const runTests = async (
       const opaTestOutput: string[] = [];
       const opaErrorOutput: string[] = [];
 
-      opaTestProcess = executeTests(cwd, policyTestDir, opaCommand, scenarioName);
+      opaTestProcess = executeTests(cwd, policyTestDir, opaCommand, testId);
 
       opaTestProcess.stdout.on('data', (chunk: any) => {
         opaTestOutput.push(chunk.toString());
@@ -102,6 +98,7 @@ export const runTests = async (
       });
       opaTestProcess.unref();
     } catch (error) {
+      item.error = (error as Error).message;
       reject(error);
     }
   });
@@ -116,14 +113,14 @@ export const processTestResult = (
   cwd: string | undefined
 ) => {
   const messages: ITestMessage[] = [];
-  const scenarioName = item.label;
+  const testId = item.id;
   const results = convertResults(testRun, opaTestOutput.join());
   if (opaErrorOutput.length > 0) {
     messages.push(new TestMessage(opaErrorOutput.join()));
   }
   let actual: IOpaTestResult | undefined;
   if (results) {
-    actual = extractResult(cwd, results, scenarioName, item.uri);
+    actual = extractResult(results, testId);
   }
   if (actual && actual.fail === true) {
     testRun.failed(item, messages, duration);

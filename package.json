@@ -85,10 +85,8 @@
           "type": [
             "string"
           ],
-          "scope": "window",
-          "default": [
-            "opa"
-          ],
+          "scope": "machine",
+          "default": "opa",
           "description": "The name, or full path to the opa command on your system, defaults to opa (or opa.exe on windows)"
         }
       }

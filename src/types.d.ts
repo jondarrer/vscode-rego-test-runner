@@ -360,7 +360,7 @@ export interface IReadFileFunc {
 }
 
 export interface IOnTestHanderFunc {
-  (testName: string, range: IRange): void;
+  (packageName: string | null, testName: string, range: IRange): void;
 }
 
 export interface IOpaTestResult {

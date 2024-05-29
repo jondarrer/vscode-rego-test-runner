@@ -65,8 +65,8 @@ export const registerTestItemCasesFromFile = (
 ): ITestItemCollection => {
   const children: ITestItem[] = [];
 
-  const onTestHandler: IOnTestHanderFunc = (testName: string, range: IRange): void => {
-    const id = `${item.uri}#${testName}`;
+  const onTestHandler: IOnTestHanderFunc = (packageName: string | null, testName: string, range: IRange): void => {
+    const id = `${packageName !== null ? packageName + '.' : ''}${testName}`;
     const testCase = controller.createTestItem(id, testName, item.uri);
     testCase.range = range;
     children.push(testCase);
