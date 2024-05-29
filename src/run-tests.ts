@@ -51,7 +51,7 @@ export const extractResult = (
   results: IOpaTestResult[] | undefined,
   testId: string | undefined
 ): IOpaTestResult | undefined => {
-  return results?.find((result) => `${result.package}.${result.name}` === `data.${testId}`);
+  return results?.find((result) => `${result.package}.${result.name}` === testId);
 };
 
 export const runTests = async (

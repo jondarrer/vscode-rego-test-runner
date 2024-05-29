@@ -66,7 +66,11 @@ export const registerTestItemCasesFromFile = (
   const children: ITestItem[] = [];
 
   const onTestHandler: IOnTestHanderFunc = (packageName: string | null, testName: string, range: IRange): void => {
-    const id = `${packageName !== null ? packageName + '.' : ''}${testName}`;
+    // You can query the value of any rule loaded into OPA by referring to it
+    // with an absolute path. The path of a rule is always:
+    // data.<package-path>.<rule-name>.
+    // https://www.openpolicyagent.org/docs/latest/#rego
+    const id = `data.${packageName !== null ? packageName + '.' : ''}${testName}`;
     const testCase = controller.createTestItem(id, testName, item.uri);
     testCase.range = range;
     children.push(testCase);
