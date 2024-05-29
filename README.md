@@ -27,7 +27,7 @@ installed in your $PATH.
 | --------------------------- | -------------------- | ---------------------------------------------------------------------------------------------- |
 | `regoTest.policyTestDir`    | `${workspaceFolder}` | Relative folder from which to load the policy tests, defaults to the current working directory |
 | `regoTest.testFilePatterns` | `["**/*_test.rego"]` | List of patterns which identify files as policy tests                                          |
-| `regoTest.opaCommand`       | `opa` or `opa.exe`   | List of patterns which identify files as policy tests                                          |
+| `regoTest.opaCommand`       | `opa` or `opa.exe`   | The name, or full path to the opa command on your system, defaults to opa (or opa.exe on windows)                                          |
 
 ## Planned features
 
