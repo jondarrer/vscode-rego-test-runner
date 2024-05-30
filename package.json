@@ -29,7 +29,7 @@
     "rego",
     "policy"
   ],
-  "preview": true,
+  "preview": false,
   "main": "./out/extension.js",
   "scripts": {
     "prepare": "husky install",
@@ -57,7 +57,7 @@
   },
   "icon": "logo.jpeg",
   "galleryBanner": {
-    "color": "#7e9299",
+    "color": "#b9bcbd",
     "theme": "light"
   },
   "contributes": {
