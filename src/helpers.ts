@@ -16,7 +16,9 @@ import {
   IOnTestHanderFunc,
   IRange,
   IReadFileFunc,
+  IGetConfigFunc,
 } from './types';
+import { getConfig } from './config';
 
 const textDecoder = new TextDecoder('utf-8');
 
@@ -24,17 +26,16 @@ export const handleRunRequest = (
   controller: ITestController,
   request: ITestRunRequest,
   cancellation: ICancellationToken,
-  cwd: string | undefined,
-  policyTestDir: string,
-  opaCommand: string = 'opa'
+  getConfig: IGetConfigFunc,
 ) => {
+  const { cwd, policyTestDir, opaCommand } = getConfig();
   startTestRun(controller, request, cwd, policyTestDir, opaCommand);
 };
 
 export const updateWorkspaceTestFile = (
   controller: ITestController,
   document: ITextDocument,
-  testFilePatterns: string[]
+  testFilePatterns: string[],
 ): ITestItem | undefined => {
   if (document.uri.scheme !== 'file') {
     return;
@@ -61,7 +62,7 @@ export const registerTestItemFile = (controller: ITestController, uri: IUri): IT
 export const registerTestItemCasesFromFile = (
   controller: ITestController,
   item: ITestItem,
-  content: string
+  content: string,
 ): ITestItemCollection => {
   const children: ITestItem[] = [];
 
@@ -87,7 +88,7 @@ export const refreshTestFiles = async (
   controller: ITestController,
   pattern: string,
   findFiles: IFindFilesFunc,
-  readFile: IReadFileFunc
+  readFile: IReadFileFunc,
 ): Promise<ITestItem[]> => {
   return Promise.all(
     (await findFiles(pattern)).map(async (uri) => {
@@ -98,7 +99,7 @@ export const refreshTestFiles = async (
       const children = registerTestItemCasesFromFile(controller, item, content);
 
       return item;
-    })
+    }),
   );
 };
 
@@ -107,7 +108,7 @@ export const startTestRun = async (
   request: ITestRunRequest,
   cwd: string | undefined,
   policyTestDir: string,
-  opaCommand: string = 'opa'
+  opaCommand: string = 'opa',
 ) => {
   const testRun = controller.createTestRun(request);
   const items: ITestItem[] = [];

@@ -1,15 +1,9 @@
-import os from 'node:os';
 import * as vscode from 'vscode';
 import { handleRunRequest, refreshTestFiles, updateWorkspaceTestFile } from './helpers';
+import { getConfig } from './config';
 
 export async function activate(context: vscode.ExtensionContext) {
-  const cwd = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders[0].uri.fsPath;
-  const opaCommand: string =
-    vscode.workspace.getConfiguration('regoTest').get('opaCommand') || (os.platform() === 'win32' ? 'opa.exe' : 'opa');
-  const policyTestDir: string = vscode.workspace.getConfiguration('regoTest').get('policyTestDir') || '.';
-  const testFilePatterns: string[] = vscode.workspace.getConfiguration('regoTest').get('testFilePatterns') || [
-    '**/*_test.rego',
-  ];
+  const { testFilePatterns } = getConfig();
   const controller = vscode.tests.createTestController('RegoTestController', 'Rego');
   context.subscriptions.push(controller);
 
@@ -23,10 +17,10 @@ export async function activate(context: vscode.ExtensionContext) {
     'Run Tests',
     vscode.TestRunProfileKind.Run,
     (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) =>
-      handleRunRequest(controller, request, cancellation, cwd, policyTestDir, opaCommand),
+      handleRunRequest(controller, request, cancellation, getConfig),
     true,
     undefined,
-    true
+    true,
   );
 
   // Discover tests by going through documents the editor is
@@ -38,11 +32,15 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Respond to document changes, whether editing or creation
   context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument((document) =>
-      updateWorkspaceTestFile(controller, document, testFilePatterns)
-    ),
-    vscode.workspace.onDidChangeTextDocument((event) =>
-      updateWorkspaceTestFile(controller, event.document, testFilePatterns)
-    )
+    vscode.workspace.onDidOpenTextDocument((document) => {
+      // Get the config again, as it may have changed since the plugin was installed
+      const { testFilePatterns } = getConfig();
+      updateWorkspaceTestFile(controller, document, testFilePatterns);
+    }),
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      // Get the config again, as it may have changed since the plugin was installed
+      const { testFilePatterns } = getConfig();
+      updateWorkspaceTestFile(controller, event.document, testFilePatterns);
+    }),
   );
 }

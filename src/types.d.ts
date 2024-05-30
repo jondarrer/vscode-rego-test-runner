@@ -363,6 +363,10 @@ export interface IOnTestHanderFunc {
   (packageName: string | null, testName: string, range: IRange): void;
 }
 
+export interface IGetConfigFunc {
+  (): { cwd: string | undefined; testFilePatterns: string[]; policyTestDir: string; opaCommand: string };
+}
+
 export interface IOpaTestResult {
   location: {
     file: string;

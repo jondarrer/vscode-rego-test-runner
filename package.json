@@ -85,7 +85,8 @@
         },
         "regoTest.opaCommand": {
           "type": [
-            "string"
+            "string",
+            null
           ],
           "scope": "machine",
           "default": "opa",
@@ -100,7 +101,7 @@
   "lint-staged": {
     "src/**/*.ts": [
       "eslint --fix --quiet",
-      "prettier --single-quote --trailing-comma --write",
+      "prettier --single-quote --trailing-comma all --write",
       "git add"
     ]
   }
