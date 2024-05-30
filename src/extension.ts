@@ -8,6 +8,8 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(controller);
 
   controller.refreshHandler = async () => {
+    // Get the config again, as it may have changed since the plugin was activated
+    const { testFilePatterns } = getConfig();
     for (let testFilePattern of testFilePatterns) {
       await refreshTestFiles(controller, testFilePattern, vscode.workspace.findFiles, vscode.workspace.fs.readFile);
     }
@@ -23,22 +25,20 @@ export async function activate(context: vscode.ExtensionContext) {
     true,
   );
 
-  // Discover tests by going through documents the editor is
-  // currently aware of. This appears to only get the currently
-  // focused document.
-  for (const document of vscode.workspace.textDocuments) {
-    updateWorkspaceTestFile(controller, document, testFilePatterns);
+  // Discover tests by going through documents in the workspace
+  for (let testFilePattern of testFilePatterns) {
+    await refreshTestFiles(controller, testFilePattern, vscode.workspace.findFiles, vscode.workspace.fs.readFile);
   }
 
   // Respond to document changes, whether editing or creation
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((document) => {
-      // Get the config again, as it may have changed since the plugin was installed
+      // Get the config again, as it may have changed since the plugin was activated
       const { testFilePatterns } = getConfig();
       updateWorkspaceTestFile(controller, document, testFilePatterns);
     }),
     vscode.workspace.onDidChangeTextDocument((event) => {
-      // Get the config again, as it may have changed since the plugin was installed
+      // Get the config again, as it may have changed since the plugin was activated
       const { testFilePatterns } = getConfig();
       updateWorkspaceTestFile(controller, event.document, testFilePatterns);
     }),

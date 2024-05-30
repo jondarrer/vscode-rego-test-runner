@@ -6,12 +6,11 @@ Run [Rego tests](https://www.openpolicyagent.org/docs/latest/policy-testing/) fo
 
 ## Features
 
-Simple way to run OPA Rego tests from within VS Code.
+Simple way to run OPA Rego tests from within VS Code. Tests are policies which begin with `test_`.
 
 ## Requirements
 
-This plugin requires the [Open Policy Agent](https://github.com/open-policy-agent/opa) executable (`opa`) to be
-installed in your $PATH.
+This plugin requires the [Open Policy Agent](https://github.com/open-policy-agent/opa) executable (`opa`) to be installed in your $PATH.
 
 ### Installation
 
@@ -27,6 +26,7 @@ To install the extension, visit the Visual Studio Code Marketplace or search for
 
 ## Features
 
+- Automatic test discovery upon activation
 - Manually discover tests via the Refresh Tests feature
 - Run all tests within a file
 - Run tests individually
@@ -35,7 +35,6 @@ To install the extension, visit the Visual Studio Code Marketplace or search for
 
 ## Planned features
 
-- [ ] [Automatic test discovery](https://github.com/jondarrer/vscode-rego-test-runner/issues/2)
 - [ ] Watch tests
 - [ ] Run all tests together
 - [ ] View verbose test failure message next to the failed test and in the Test Results pane
