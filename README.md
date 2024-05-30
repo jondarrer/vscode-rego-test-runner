@@ -75,6 +75,23 @@ This will run the tests with a coverage report (requires 100% across the board t
 open coverage/lcov-report/index.html
 ```
 
+### Integration testing
+
+NB. Requires [vsce](https://code.visualstudio.com/api/working-with-extensions/publishing-extension) to be installed and for you to be logged in with it using a publisher access token from [Visual Studio Marketplace](https://marketplace.visualstudio.com/).
+
+Build the vsix package:
+
+```sh
+vsce package
+```
+
+Uninstall the previous build (if necessary), and install the new one:
+
+```sh
+code --uninstall-extension jondarrer.vscode-rego-test-runner
+code --install-extension /path/to/vscode-rego-test-runner-<version>.vsix
+```
+
 ### Debugging
 
 Run the `Run Extension` task in VS Code to debug the extension.
