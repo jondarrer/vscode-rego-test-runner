@@ -2,7 +2,7 @@
 
 Run [Rego tests](https://www.openpolicyagent.org/docs/latest/policy-testing/) for [Open Policy Agent](https://www.openpolicyagent.org) within VS Code.
 
-![Exension Demo](https://github.com/jondarrer/vscode-rego-test-runner/blob/main/extension-demo.gif)
+![Exension Demo](https://raw.githubusercontent.com/jondarrer/vscode-rego-test-runner/main/extension-demo.gif)
 
 ## Features
 
