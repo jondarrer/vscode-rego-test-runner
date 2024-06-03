@@ -489,17 +489,24 @@ export interface IOnTestHanderFunc {
 }
 
 export interface IGetConfigFunc {
-  (): { cwd: string | undefined; testFilePatterns: string[]; policyTestDir: string; opaCommand: string };
+  (): {
+    cwd: string | undefined;
+    testFilePatterns: string[];
+    policyTestDir: string;
+    opaCommand: string;
+    showEnhancedErrors: boolean;
+  };
 }
 
 export interface IOpaTestResult {
   location: {
     file: string;
-    row: number;
-    col: number;
+    row?: number;
+    col?: number;
   };
   package: string;
   name: string;
   fail?: boolean;
   duration: number;
+  output?: string;
 }

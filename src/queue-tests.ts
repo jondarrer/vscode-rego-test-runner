@@ -8,6 +8,7 @@ export const runTestQueue = async (
   cwd: string | undefined,
   policyTestDir: string,
   opaCommand: string = 'opa',
+  showEnhancedErrors: boolean,
 ) => {
   for (const item of queue) {
     testRun.appendOutput(`Running ${item.id}\r\n`);
@@ -16,7 +17,7 @@ export const runTestQueue = async (
     } else {
       testRun.started(item);
       try {
-        await runTests(item, testRun, cwd, policyTestDir, opaCommand);
+        await runTests(item, testRun, cwd, policyTestDir, opaCommand, showEnhancedErrors);
       } catch (error) {
         console.log(error);
         testRun.failed(item, new TestMessage((error as Error).message), 0);

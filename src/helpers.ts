@@ -36,8 +36,8 @@ export const handleRunRequest = (
   // If the request is a regular, ad-hoc request to run tests immediately,
   // then start a new test run.
   if (!request.continuous) {
-    const { cwd, policyTestDir, opaCommand } = getConfig();
-    startTestRun(controller, request, cwd, policyTestDir, opaCommand);
+    const { cwd, policyTestDir, opaCommand, showEnhancedErrors } = getConfig();
+    startTestRun(controller, request, cwd, policyTestDir, opaCommand, showEnhancedErrors);
   } else {
     // When dealing with a request to continouly run tests as files change,
     // we add these files to those which we're watching. Then, when a file
@@ -136,6 +136,7 @@ export const startTestRun = async (
   cwd: string | undefined,
   policyTestDir: string,
   opaCommand: string = 'opa',
+  showEnhancedErrors: boolean = false,
 ) => {
   const testRun = controller.createTestRun(request);
   const items: ITestItem[] = [];
@@ -146,7 +147,7 @@ export const startTestRun = async (
   });
 
   const queue = placeTestsInQueue(items, request, testRun);
-  await runTestQueue(testRun, queue, cwd, policyTestDir, opaCommand);
+  await runTestQueue(testRun, queue, cwd, policyTestDir, opaCommand, showEnhancedErrors);
 };
 
 export const handleFileChanged = (

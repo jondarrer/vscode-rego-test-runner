@@ -23,12 +23,14 @@ To install the extension, visit the Visual Studio Code Marketplace or search for
 | `regoTest.policyTestDir`    | `${workspaceFolder}` | Relative folder from which to load the policy tests, defaults to the current working directory |
 | `regoTest.testFilePatterns` | `["**/*_test.rego"]` | List of patterns which identify files as policy tests                                          |
 | `regoTest.opaCommand`       | `opa` or `opa.exe`   | The name, or full path to the opa command on your system, defaults to opa (or opa.exe on windows)                                          |
+| `regoTest.showEnhancedErrors` | `false` | Shows errors by running tests in text output mode, rather than JSON. This is experimental, and not battle tested, so is off by default                                          |
 
 ## Features
 
 - Automatic test discovery upon activation
 - Manually discover tests via the Refresh Tests feature
-- Watch tests - all tests, all tests within a file, and indiviual tests 
+- Watch tests - all tests, all tests within a file, and indiviual tests
+- View verbose test failure message next to the failed test and in the Test Results pane
 - Run all tests within a file
 - Run tests individually
 - Run individual tests directly from within the test file
@@ -37,7 +39,6 @@ To install the extension, visit the Visual Studio Code Marketplace or search for
 ## Planned features
 
 - [ ] Run all tests together
-- [ ] View verbose test failure message next to the failed test and in the Test Results pane
 - [ ] Handle todo tests, those prefixed with `todo_`, but which must be skipped
 
 ## Other feature ideas

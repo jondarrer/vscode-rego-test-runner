@@ -10,11 +10,13 @@ export const getConfig: IGetConfigFunc = () => {
   const testFilePatterns: string[] = vscode.workspace.getConfiguration('regoTest').get('testFilePatterns') || [
     '**/*_test.rego',
   ];
+  const showEnhancedErrors: boolean = vscode.workspace.getConfiguration('regoTest').get('showEnhancedErrors') || false;
 
   return {
     cwd,
     opaCommand,
     policyTestDir,
     testFilePatterns,
+    showEnhancedErrors,
   };
 };

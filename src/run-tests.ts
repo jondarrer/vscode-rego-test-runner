@@ -5,12 +5,14 @@ import os from 'node:os';
 
 import { IOpaTestResult, ITestItem, ITestMessage, ITestRun } from './types';
 import { TestMessage } from './test-classes';
+import { textOutputParser } from './text-output-parser';
 
 export const executeTests = (
   cwd: string | undefined,
   policyTestDir: string,
   opaCommand: string = 'opa',
   testId: string | undefined,
+  format: 'json' | 'text' = 'json',
 ): ChildProcessWithoutNullStreams => {
   const opaCmdArguments = ['test'];
   const opaProcessOptions: SpawnOptionsWithoutStdio = {
@@ -31,15 +33,29 @@ export const executeTests = (
     opaCmdArguments.push('--run');
     opaCmdArguments.push(testId);
   }
-  opaCmdArguments.push('--format=json');
+  if (format === 'json') {
+    opaCmdArguments.push('--format=json');
+  } else {
+    opaCmdArguments.push('--verbose');
+  }
   console.log([cwd, opaCommand, ...opaCmdArguments]);
 
   return spawn(opaCommand, opaCmdArguments, opaProcessOptions);
 };
 
-export const convertResults = (testRun: ITestRun, results: string): IOpaTestResult[] | undefined => {
+export const convertResults = (
+  testRun: ITestRun,
+  results: string,
+  item: ITestItem,
+  cwd: string | undefined,
+  showEnhancedErrors: boolean,
+): IOpaTestResult[] | undefined => {
   try {
-    return JSON.parse(results);
+    if (showEnhancedErrors) {
+      return textOutputParser(results, cwd, item.uri, item.id);
+    } else {
+      return JSON.parse(results);
+    }
   } catch (error) {
     testRun.appendOutput(results);
     testRun.appendOutput((error as Error).message);
@@ -60,6 +76,7 @@ export const runTests = async (
   cwd: string | undefined,
   policyTestDir: string,
   opaCommand: string = 'opa',
+  showEnhancedErrors: boolean,
 ): Promise<IOpaTestResult | undefined> => {
   const start = new Date();
   const testId = item.id;
@@ -70,7 +87,13 @@ export const runTests = async (
       const opaTestOutput: string[] = [];
       const opaErrorOutput: string[] = [];
 
-      opaTestProcess = executeTests(cwd, policyTestDir, opaCommand, testId);
+      opaTestProcess = executeTests(
+        cwd,
+        policyTestDir,
+        opaCommand,
+        testId,
+        showEnhancedErrors === true ? 'text' : 'json',
+      );
 
       opaTestProcess.stdout.on('data', (chunk: any) => {
         opaTestOutput.push(chunk.toString());
@@ -86,7 +109,15 @@ export const runTests = async (
           testRun.appendOutput(opaErrorOutput.join(), undefined, item);
         }
 
-        const actual = processTestResult(opaTestOutput, opaErrorOutput, end.getTime() - start.getTime(), item, testRun);
+        const actual = processTestResult(
+          opaTestOutput,
+          opaErrorOutput,
+          end.getTime() - start.getTime(),
+          item,
+          testRun,
+          cwd,
+          showEnhancedErrors,
+        );
         resolve(actual);
       });
       opaTestProcess.unref();
@@ -103,16 +134,21 @@ export const processTestResult = (
   duration: number,
   item: ITestItem,
   testRun: ITestRun,
+  cwd: string | undefined,
+  showEnhancedErrors: boolean,
 ) => {
   const messages: ITestMessage[] = [];
   const testId = item.id;
-  const results = convertResults(testRun, opaTestOutput.join());
+  const results = convertResults(testRun, opaTestOutput.join(), item, cwd, showEnhancedErrors);
   if (opaErrorOutput.length > 0) {
     messages.push(new TestMessage(opaErrorOutput.join()));
   }
   let actual: IOpaTestResult | undefined;
   if (results) {
     actual = extractResult(results, testId);
+  }
+  if (actual && actual.output) {
+    messages.push(new TestMessage(actual.output));
   }
   if (actual && actual.fail === true) {
     testRun.failed(item, messages, duration);

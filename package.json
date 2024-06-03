@@ -66,17 +66,13 @@
       "type": "object",
       "properties": {
         "regoTest.policyTestDir": {
-          "type": [
-            "string"
-          ],
+          "type": "string",
           "scope": "window",
           "default": ".",
           "description": "Relative folder from which to load the policy tests"
         },
         "regoTest.testFilePatterns": {
-          "type": [
-            "array"
-          ],
+          "type": "array",
           "scope": "window",
           "default": [
             "**/*_test.rego"
@@ -91,6 +87,12 @@
           "scope": "machine",
           "default": "opa",
           "description": "The name, or full path to the opa command on your system, defaults to opa (or opa.exe on windows)"
+        },
+        "regoTest.showEnhancedErrors": {
+          "type": "boolean",
+          "scope": "window",
+          "default": false,
+          "description": "Shows errors by running tests in text output mode, rather than JSON. This is experimental, and not battle tested, so is off by default"
         }
       }
     }

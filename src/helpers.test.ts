@@ -252,6 +252,7 @@ describe('handleRunRequest', () => {
     testFilePatterns: [],
     policyTestDir: '.',
     opaCommand: 'opa',
+    showEnhancedErrors: false,
   });
 
   it('should start running tests if an ad-hoc (non-continuous) request is made', () => {
@@ -406,6 +407,7 @@ describe('setupFileSystemWatchers', () => {
     testFilePatterns,
     policyTestDir: '.',
     opaCommand: 'opa',
+    showEnhancedErrors: false,
   });
   const onDidCreate = mock.fn(
     (listener: (e: IUri) => any, thisArgs?: any, disposables?: IDisposable[]): IDisposable => {
