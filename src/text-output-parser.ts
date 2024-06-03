@@ -1,6 +1,6 @@
 import { IOpaTestResult, IUri } from './types';
 
-const RESULT_REGEX = /^(.+)\.(.+): (PASS|FAIL) \((\d+\.\d+)(µs|ms|s)\)/m;
+const RESULT_REGEX = /^(.+)\.(.+): (PASS|FAIL) \((\d+\.?\d*)(µs|ms|s)\)/m;
 const FILE_REGEX = /^(.+\/.+):\n(.+)\n(-+)/m;
 const FAILURES_REGEX = /^FAILURES\n-+\n(?:((.|\n)*))(\n\nSUMMARY)/m;
 
