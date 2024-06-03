@@ -1,6 +1,6 @@
 import { afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
-import { ITestItem, ITestRun, ITestRunRequest } from './types';
+import { IDisposable, ITestItem, ITestRun, ITestRunRequest } from './types';
 import { placeTestsInQueue } from './queue-tests';
 import { TestItemCollection, Uri } from './test-classes';
 
@@ -12,7 +12,14 @@ const testRun: ITestRun = {
   skipped: mock.fn(),
   started: mock.fn(),
   end: mock.fn(),
-  token: { isCancellationRequested: false, onCancellationRequested: () => {} },
+  token: {
+    isCancellationRequested: false,
+    onCancellationRequested: mock.fn(
+      (listener: (e: any) => any, thisArgs?: any, disposables?: IDisposable[]): IDisposable => ({
+        dispose: (): void => {},
+      }),
+    ),
+  },
 };
 
 const fItem1: ITestItem = {
@@ -79,6 +86,7 @@ describe('placeTestsInQueue', () => {
     let request: ITestRunRequest = {
       include: undefined,
       exclude: undefined,
+      profile: undefined,
     };
 
     // Act
@@ -92,6 +100,7 @@ describe('placeTestsInQueue', () => {
     let request: ITestRunRequest = {
       include: [tcItem1],
       exclude: undefined,
+      profile: undefined,
     };
 
     // Act
@@ -106,6 +115,7 @@ describe('placeTestsInQueue', () => {
     let request: ITestRunRequest = {
       include: [fItem1],
       exclude: undefined,
+      profile: undefined,
     };
 
     // Act
@@ -120,6 +130,7 @@ describe('placeTestsInQueue', () => {
     let request: ITestRunRequest = {
       include: [fItem1],
       exclude: [tcItem1],
+      profile: undefined,
     };
 
     // Act
@@ -134,6 +145,7 @@ describe('placeTestsInQueue', () => {
     let request: ITestRunRequest = {
       include: [fItem1],
       exclude: [tcItem1, tcItem2],
+      profile: undefined,
     };
 
     // Act

@@ -3,19 +3,30 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 
 import {
+  GlobPatternType,
+  ICancellationToken,
+  IDisposable,
+  IEventEmitter,
+  IFileSystemWatcher,
   IFindFilesFunc,
+  IGetConfigFunc,
   IPosition,
   IRange,
   IReadFileFunc,
   ITestController,
   ITestItem,
+  ITestRun,
+  ITestRunProfile,
+  ITestRunRequest,
   ITextDocument,
   IUri,
 } from './types';
 import {
+  handleRunRequest,
   refreshTestFiles,
   registerTestItemCasesFromFile,
   registerTestItemFile,
+  setupFileSystemWatchers,
   updateWorkspaceTestFile,
 } from './helpers';
 import { TestItemCollection, Uri } from './test-classes';
@@ -23,14 +34,14 @@ import { TestItemCollection, Uri } from './test-classes';
 class Range implements IRange {
   constructor(
     public start: IPosition,
-    public end: IPosition
+    public end: IPosition,
   ) {}
 }
 
 class Position implements IPosition {
   constructor(
     public line: number,
-    public character: number
+    public character: number,
   ) {}
 }
 
@@ -57,14 +68,46 @@ const item: ITestItem = {
   canResolveChildren: false,
   error: undefined,
 };
+let listenerMock: (e: any) => any;
+const onCancellationRequested = mock.fn(
+  (listener: (e: any) => any, thisArgs?: any, disposables?: IDisposable[]): IDisposable => {
+    console.log(listener);
+    listenerMock = listener;
+    return { dispose: (): void => {} };
+  },
+);
 const createTestItem = mock.fn((id: string, label: string, uri?: IUri): ITestItem => item);
 const uri = new Uri('file', `path${path.sep}to${path.sep}test${path.sep}something_test.rego`);
+const testRun: ITestRun = {
+  failed: mock.fn(),
+  passed: mock.fn(),
+  enqueued: mock.fn(),
+  appendOutput: mock.fn(),
+  skipped: mock.fn(),
+  started: mock.fn(),
+  end: mock.fn(),
+  token: { isCancellationRequested: false, onCancellationRequested },
+};
+const createTestRun = mock.fn((request: ITestRunRequest, name?: string, persist?: boolean): ITestRun => testRun);
+const refreshHandler = mock.fn((token: ICancellationToken): Thenable<void> => Promise.resolve());
 const controller: ITestController = {
   createTestItem,
-  createTestRun: mock.fn(),
+  createTestRun,
   items,
+  refreshHandler,
 };
 const testFilePatterns = ['**/*_test.rego'];
+const watchedTests = new Map<ITestItem | 'ALL', ITestRunProfile | undefined>();
+const set = mock.fn(
+  (key: ITestItem | 'ALL', value: ITestRunProfile | undefined): Map<ITestItem | 'ALL', ITestRunProfile | undefined> => {
+    return new Map<ITestItem | 'ALL', ITestRunProfile | undefined>();
+  },
+);
+mock.method(watchedTests, 'set', set);
+watchedTests.set = set;
+const deleteMock = mock.fn((key: ITestItem | 'ALL'): boolean => true);
+mock.method(watchedTests, 'delete', deleteMock);
+watchedTests.delete = deleteMock;
 
 afterEach(() => {
   mock.reset();
@@ -200,5 +243,234 @@ describe('registerTestItemCasesFromFile', () => {
     // Assert
     assert.ok(result);
     assert.strictEqual(result.size, 3);
+  });
+});
+
+describe('handleRunRequest', () => {
+  const getConfig: IGetConfigFunc = () => ({
+    cwd: '/',
+    testFilePatterns: [],
+    policyTestDir: '.',
+    opaCommand: 'opa',
+  });
+
+  it('should start running tests if an ad-hoc (non-continuous) request is made', () => {
+    // Arrange
+    const request: ITestRunRequest = {
+      include: undefined,
+      exclude: undefined,
+      continuous: false,
+      profile: undefined,
+    };
+    const cancellation: ICancellationToken = {
+      isCancellationRequested: false,
+      onCancellationRequested,
+    };
+
+    // Act
+    handleRunRequest(controller, request, cancellation, getConfig, watchedTests);
+
+    // Assert
+    assert.strictEqual(createTestRun.mock.callCount(), 1, 'createTestRun should have been called');
+  });
+
+  it('should set key ALL in watchedTests when all tests are requested to be watched', () => {
+    // Arrange
+    const profile: ITestRunProfile = {};
+    const request: ITestRunRequest = {
+      include: undefined,
+      exclude: undefined,
+      continuous: true,
+      profile,
+    };
+    const cancellation: ICancellationToken = {
+      isCancellationRequested: false,
+      onCancellationRequested,
+    };
+
+    // Act
+    set.mock.resetCalls();
+    watchedTests.set = set;
+    handleRunRequest(controller, request, cancellation, getConfig, watchedTests);
+
+    // Assert
+    assert.strictEqual(set.mock.callCount(), 1);
+    assert.strictEqual(set.mock.calls[0].arguments[0], 'ALL');
+    assert.strictEqual(set.mock.calls[0].arguments[1], profile);
+  });
+
+  it('should set keys in watchedTests when specific tests are requested to be watched', () => {
+    // Arrange
+    const profile: ITestRunProfile = {};
+    const request: ITestRunRequest = {
+      include: [item],
+      exclude: undefined,
+      continuous: true,
+      profile,
+    };
+    const cancellation: ICancellationToken = {
+      isCancellationRequested: false,
+      onCancellationRequested,
+    };
+
+    // Act
+    set.mock.resetCalls();
+    watchedTests.set = set;
+    handleRunRequest(controller, request, cancellation, getConfig, watchedTests);
+
+    // Assert
+    assert.strictEqual(set.mock.callCount(), 1);
+    assert.strictEqual(set.mock.calls[0].arguments[0], item);
+    assert.strictEqual(set.mock.calls[0].arguments[1], profile);
+  });
+
+  it('should not start running tests if a watch (continuous) request is made', () => {
+    // Arrange
+    const request: ITestRunRequest = {
+      include: undefined,
+      exclude: undefined,
+      continuous: true,
+      profile: undefined,
+    };
+    const cancellation: ICancellationToken = {
+      isCancellationRequested: false,
+      onCancellationRequested,
+    };
+
+    // Act
+    createTestRun.mock.resetCalls();
+    handleRunRequest(controller, request, cancellation, getConfig, watchedTests);
+
+    // Assert
+    assert.strictEqual(createTestRun.mock.callCount(), 0, 'createTestRun should not have been called');
+  });
+
+  it('should delete key ALL in watchedTests when watched tests are cancelled', async () => {
+    // Arrange
+    const profile: ITestRunProfile = {};
+    const request: ITestRunRequest = {
+      include: undefined,
+      exclude: undefined,
+      continuous: true,
+      profile,
+    };
+    const cancellation: ICancellationToken = {
+      isCancellationRequested: false,
+      onCancellationRequested,
+    };
+
+    // Act
+    set.mock.resetCalls();
+    deleteMock.mock.resetCalls();
+    watchedTests.set = set;
+    watchedTests.delete = deleteMock;
+    handleRunRequest(controller, request, cancellation, getConfig, watchedTests);
+    console.log(listenerMock);
+    listenerMock({});
+
+    // Assert
+    assert.strictEqual(deleteMock.mock.callCount(), 1);
+    assert.strictEqual(deleteMock.mock.calls[0].arguments[0], 'ALL');
+  });
+
+  it('should set keys in watchedTests when specific tests are requested to be watched', () => {
+    // Arrange
+    const profile: ITestRunProfile = {};
+    const request: ITestRunRequest = {
+      include: [item],
+      exclude: undefined,
+      continuous: true,
+      profile,
+    };
+    const cancellation: ICancellationToken = {
+      isCancellationRequested: false,
+      onCancellationRequested,
+    };
+
+    // Act
+    set.mock.resetCalls();
+    watchedTests.set = set;
+    handleRunRequest(controller, request, cancellation, getConfig, watchedTests);
+
+    // Assert
+    assert.strictEqual(set.mock.callCount(), 1);
+    assert.strictEqual(set.mock.calls[0].arguments[0], item);
+    assert.strictEqual(set.mock.calls[0].arguments[1], profile);
+  });
+});
+
+describe('setupFileSystemWatchers', () => {
+  const testFilePatterns = ['**/*_test.pattern', '**/*_another.pattern'];
+  const getConfig: IGetConfigFunc = () => ({
+    cwd: '/',
+    testFilePatterns,
+    policyTestDir: '.',
+    opaCommand: 'opa',
+  });
+  const onDidCreate = mock.fn(
+    (listener: (e: IUri) => any, thisArgs?: any, disposables?: IDisposable[]): IDisposable => {
+      return { dispose: () => {} };
+    },
+  );
+  const onDidChange = mock.fn(
+    (listener: (e: IUri) => any, thisArgs?: any, disposables?: IDisposable[]): IDisposable => {
+      return { dispose: () => {} };
+    },
+  );
+  const onDidDelete = mock.fn(
+    (listener: (e: IUri) => any, thisArgs?: any, disposables?: IDisposable[]): IDisposable => {
+      return { dispose: () => {} };
+    },
+  );
+  const createFileSystemWatcher = mock.fn(
+    (
+      globPattern: GlobPatternType,
+      ignoreCreateEvents?: boolean,
+      ignoreChangeEvents?: boolean,
+      ignoreDeleteEvents?: boolean,
+    ): IFileSystemWatcher => {
+      return { onDidCreate, onDidChange, onDidDelete, dispose: () => {} };
+    },
+  );
+  const readFile: IReadFileFunc = mock.fn(async (uri: IUri): Promise<Uint8Array> => new Uint8Array());
+
+  afterEach(() => {
+    mock.reset();
+  });
+
+  it('creates a watcher for each configured pattern', () => {
+    // Arrange
+    const fileChangedEmitter: IEventEmitter<IUri> = { fire: (data: IUri) => {} };
+
+    // Act
+    createFileSystemWatcher.mock.resetCalls();
+    setupFileSystemWatchers(controller, fileChangedEmitter, createFileSystemWatcher, readFile, getConfig);
+
+    // Assert
+    assert.strictEqual(createFileSystemWatcher.mock.callCount(), 2);
+    assert.strictEqual(createFileSystemWatcher.mock.calls[0].arguments[0], testFilePatterns[0]);
+    assert.strictEqual(createFileSystemWatcher.mock.calls[1].arguments[0], testFilePatterns[1]);
+  });
+  it('watchers watch create, change and delete events', () => {
+    // Arrange
+    const fileChangedEmitter: IEventEmitter<IUri> = { fire: (data: IUri) => {} };
+
+    // Act
+    onDidCreate.mock.resetCalls();
+    onDidChange.mock.resetCalls();
+    onDidDelete.mock.resetCalls();
+    const watchers = setupFileSystemWatchers(
+      controller,
+      fileChangedEmitter,
+      createFileSystemWatcher,
+      readFile,
+      getConfig,
+    );
+
+    // Assert
+    assert.strictEqual(watchers.length, 2);
+    assert.strictEqual(onDidCreate.mock.callCount(), 2);
+    assert.strictEqual(onDidChange.mock.callCount(), 2);
+    assert.strictEqual(onDidDelete.mock.callCount(), 2);
   });
 });

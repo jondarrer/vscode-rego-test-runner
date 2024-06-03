@@ -29,6 +29,24 @@ export interface ITestController {
    * @returns An instance of the TestRun. It will be considered "running" from the moment this method is invoked until TestRun.end is called.
    */
   createTestRun(request: ITestRunRequest, name?: string, persist?: boolean): ITestRun;
+  /**
+   * If this method is present, a refresh button will be present in the UI, and this method will be invoked when it's clicked. When called, the extension should scan the workspace for any new, changed, or removed tests.
+   *
+   * It's recommended that extensions try to update tests in realtime, using a FileSystemWatcher for example, and use this method as a fallback.
+   *
+   * @returns — A thenable that resolves when tests have been refreshed.
+   */
+  refreshHandler: ((token: ICancellationToken) => void | Thenable<void>) | undefined;
+  /**
+   * A function provided by the extension that the editor may call to request children of a test item, if the TestItem.canResolveChildren is true. When called, the item should discover children and call TestController.createTestItem as children are discovered.
+   *
+   * Generally the extension manages the lifecycle of test items, but under certain conditions the editor may request the children of a specific item to be loaded. For example, if the user requests to re-run tests after reloading the editor, the editor may need to call this method to resolve the previously-run tests.
+   *
+   * The item in the explorer will automatically be marked as "busy" until the function returns or the returned thenable resolves.
+   *
+   * @param item An unresolved test item for which children are being requested, or undefined to resolve the controller's initial items.
+   */
+  // resolveHandler?: ((item: ITestItem | undefined) => void | Thenable<void>) | undefined;
 }
 
 export interface ITestItemCollection {
@@ -64,6 +82,7 @@ export interface ITestItemCollection {
    * @param itemId — Item ID to delete.
    */
   delete(itemId: string): void;
+  // [Symbol.iterator]: () => Iterator<[id: string, testItem: ITestItem], any, undefined>;
 }
 
 export interface ITestItem {
@@ -132,7 +151,17 @@ export interface ITestRunRequest {
    * The process of running tests should resolve the children of any test items who have not yet been resolved.
    */
   include: readonly ITestItem[] | undefined;
+  /**
+   * Whether the profile should run continuously as source code changes. Only relevant for profiles that set TestRunProfile.supportsContinuousRun.
+   */
+  continuous?: boolean | undefined;
+  /**
+   * The profile used for this request. This will always be defined for requests issued from the editor UI, though extensions may programmatically create requests not associated with any profile.
+   */
+  profile: ITestRunProfile | undefined;
 }
+
+export interface ITestRunProfile {}
 
 export interface ICancellationToken {
   /**
@@ -142,10 +171,85 @@ export interface ICancellationToken {
   /**
    * An Event which fires upon cancellation.
    */
-  onCancellationRequested: IEvent<any>;
+  onCancellationRequested: IEventFunc<any>;
 }
 
-export interface IEvent<Type> {}
+/**
+ * An event emitter can be used to create and manage an Event for others to subscribe to. One emitter always owns one event.
+ *
+ * Use this class if you want to provide event from within your extension, for instance inside a TextDocumentContentProvider or when providing API to other extensions.
+ */
+export interface IEventEmitter<Type> {
+  /**
+   *
+   * @param data Notify all subscribers of the event. Failure of one or more listener will not fail this function call.
+   *
+   * @param data — The event object.
+   */
+  fire(data: Type): void;
+}
+
+export interface IEventFunc<Type> {
+  (listener: (e: any) => any, thisArgs?: any, disposables?: IDisposable[]): IDisposable;
+}
+
+/**
+ * Creates a file system watcher that is notified on file events (create, change, delete) depending on the parameters provided.
+ *
+ * By default, all opened workspace folders will be watched for file changes recursively.
+ */
+export interface ICreateFileSystemWatcherFunc {
+  (
+    globPattern: GlobPatternType,
+    ignoreCreateEvents?: boolean,
+    ignoreChangeEvents?: boolean,
+    ignoreDeleteEvents?: boolean,
+  ): IFileSystemWatcher;
+}
+
+export interface IFileSystemWatcher {
+  /**
+   * A function that represents an event to which you subscribe by calling it with a listener function as argument.
+   *
+   * @param listener — The listener function will be called when the event happens.
+   *
+   * @param thisArgs — The this-argument which will be used when calling the event listener.
+   *
+   * @param disposables — An array to which a Disposable will be added.
+   *
+   * @returns — A disposable which unsubscribes the event listener.
+   */
+  onDidCreate: IEventFunc<IUri>;
+  /**
+   * A function that represents an event to which you subscribe by calling it with a listener function as argument.
+   *
+   * @param listener — The listener function will be called when the event happens.
+   *
+   * @param thisArgs — The this-argument which will be used when calling the event listener.
+   *
+   * @param disposables — An array to which a Disposable will be added.
+   *
+   * @returns — A disposable which unsubscribes the event listener.
+   */
+  onDidChange: IEventFunc<IUri>;
+  /**
+   * A function that represents an event to which you subscribe by calling it with a listener function as argument.
+   *
+   * @param listener — The listener function will be called when the event happens.
+   *
+   * @param thisArgs — The this-argument which will be used when calling the event listener.
+   *
+   * @param disposables — An array to which a Disposable will be added.
+   *
+   * @returns — A disposable which unsubscribes the event listener.
+   */
+  onDidDelete: IEventFunc<IUri>;
+  dispose(): void;
+}
+
+export interface IDisposable {
+  dispose(): void;
+}
 
 export interface ITextDocument {
   /**
@@ -279,7 +383,28 @@ export interface IUri {
 /**
  * A relative pattern is a helper to construct glob patterns that are matched relatively to a base file path. The base path can either be an absolute file path as string or uri or a workspace folder, which is the preferred way of creating the relative pattern.
  */
-export interface IRelativePattern {}
+export interface IRelativePattern {
+  /**
+   * A base file path to which this pattern will be matched against relatively. The file path must be absolute, should not have any trailing path separators and not include any relative segments (. or ..).
+   */
+  baseUri: IUri;
+  /**
+   * A file glob pattern like *.{ts,js} that will be matched on file paths relative to the base path.
+   *
+   * Example: Given a base of /home/work/folder and a file path of /home/work/folder/index.js, the file glob pattern will match on index.js.
+   */
+  pattern: string;
+  /**
+   * A base file path to which this pattern will be matched against relatively.
+   *
+   * This matches the fsPath value of RelativePattern.baseUri.
+   *
+   * Note: updating this value will update RelativePattern.baseUri to be a uri with file scheme.
+   *
+   * @deprecated — This property is deprecated, please use RelativePattern.baseUri instead.
+   */
+  base: string;
+}
 
 /**
  * Tags can be associated with TestItems and TestRunProfiles. A profile with a tag can only execute tests that include that tag in their TestItem.tags array.

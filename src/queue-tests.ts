@@ -7,7 +7,7 @@ export const runTestQueue = async (
   queue: Iterable<ITestItem>,
   cwd: string | undefined,
   policyTestDir: string,
-  opaCommand: string = 'opa'
+  opaCommand: string = 'opa',
 ) => {
   for (const item of queue) {
     testRun.appendOutput(`Running ${item.id}\r\n`);
@@ -32,10 +32,13 @@ export const placeTestsInQueue = (
   items: Iterable<ITestItem>,
   request: ITestRunRequest,
   testRun: ITestRun,
-  queue: ITestItem[] = []
+  queue: ITestItem[] = [],
 ): ITestItem[] => {
   for (const item of items) {
-    // Is this item, or its parent NOT in any include list
+    // Is this item, or its parent NOT in any include list? This is only
+    // relevant if we have an include list - like we do when a specific
+    // test has been requested. We have an empty include list when all
+    // tests are requested to be run.
     if (request.include && !request.include.includes(item)) {
       if (!item.parent || !request.include.includes(item.parent)) {
         continue;

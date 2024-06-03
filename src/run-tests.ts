@@ -3,14 +3,14 @@ import path from 'path';
 import { ChildProcessWithoutNullStreams, SpawnOptionsWithoutStdio, spawn } from 'node:child_process';
 import os from 'node:os';
 
-import { IOpaTestResult, ITestItem, ITestMessage, ITestRun, IUri } from './types';
+import { IOpaTestResult, ITestItem, ITestMessage, ITestRun } from './types';
 import { TestMessage } from './test-classes';
 
 export const executeTests = (
   cwd: string | undefined,
   policyTestDir: string,
   opaCommand: string = 'opa',
-  testId: string | undefined
+  testId: string | undefined,
 ): ChildProcessWithoutNullStreams => {
   const opaCmdArguments = ['test'];
   const opaProcessOptions: SpawnOptionsWithoutStdio = {
@@ -49,7 +49,7 @@ export const convertResults = (testRun: ITestRun, results: string): IOpaTestResu
 
 export const extractResult = (
   results: IOpaTestResult[] | undefined,
-  testId: string | undefined
+  testId: string | undefined,
 ): IOpaTestResult | undefined => {
   return results?.find((result) => `${result.package}.${result.name}` === testId);
 };
@@ -59,7 +59,7 @@ export const runTests = async (
   testRun: ITestRun,
   cwd: string | undefined,
   policyTestDir: string,
-  opaCommand: string = 'opa'
+  opaCommand: string = 'opa',
 ): Promise<IOpaTestResult | undefined> => {
   const start = new Date();
   const testId = item.id;
@@ -86,14 +86,7 @@ export const runTests = async (
           testRun.appendOutput(opaErrorOutput.join(), undefined, item);
         }
 
-        const actual = processTestResult(
-          opaTestOutput,
-          opaErrorOutput,
-          end.getTime() - start.getTime(),
-          item,
-          testRun,
-          cwd
-        );
+        const actual = processTestResult(opaTestOutput, opaErrorOutput, end.getTime() - start.getTime(), item, testRun);
         resolve(actual);
       });
       opaTestProcess.unref();
@@ -110,7 +103,6 @@ export const processTestResult = (
   duration: number,
   item: ITestItem,
   testRun: ITestRun,
-  cwd: string | undefined
 ) => {
   const messages: ITestMessage[] = [];
   const testId = item.id;
