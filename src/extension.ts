@@ -1,12 +1,7 @@
 import * as vscode from 'vscode';
-import {
-  handleFileChanged,
-  handleRunRequest,
-  refreshTestFile,
-  refreshTestFiles,
-  setupFileSystemWatchers,
-  updateWorkspaceTestFile,
-} from './helpers';
+
+import { refreshTestFile, refreshTestFiles, setupFileSystemWatchers, updateWorkspaceTestFile } from './test-discovery';
+import { handleRunRequest, handleFileChanged } from './test-execution';
 import { getConfig } from './config';
 
 export async function activate(context: vscode.ExtensionContext) {

@@ -22,13 +22,12 @@ import {
   IUri,
 } from './types';
 import {
-  handleRunRequest,
   refreshTestFiles,
   registerTestItemCasesFromFile,
   registerTestItemFile,
   setupFileSystemWatchers,
   updateWorkspaceTestFile,
-} from './helpers';
+} from './test-discovery';
 import { TestItemCollection, Uri } from './test-classes';
 
 class Range implements IRange {
@@ -243,160 +242,6 @@ describe('registerTestItemCasesFromFile', () => {
     // Assert
     assert.ok(result);
     assert.strictEqual(result.size, 3);
-  });
-});
-
-describe('handleRunRequest', () => {
-  const getConfig: IGetConfigFunc = () => ({
-    cwd: '/',
-    testFilePatterns: [],
-    policyTestDir: '.',
-    opaCommand: 'opa',
-    showEnhancedErrors: false,
-  });
-
-  it('should start running tests if an ad-hoc (non-continuous) request is made', () => {
-    // Arrange
-    const request: ITestRunRequest = {
-      include: undefined,
-      exclude: undefined,
-      continuous: false,
-      profile: undefined,
-    };
-    const cancellation: ICancellationToken = {
-      isCancellationRequested: false,
-      onCancellationRequested,
-    };
-
-    // Act
-    handleRunRequest(controller, request, cancellation, getConfig, watchedTests);
-
-    // Assert
-    assert.strictEqual(createTestRun.mock.callCount(), 1, 'createTestRun should have been called');
-  });
-
-  it('should set key ALL in watchedTests when all tests are requested to be watched', () => {
-    // Arrange
-    const profile: ITestRunProfile = {};
-    const request: ITestRunRequest = {
-      include: undefined,
-      exclude: undefined,
-      continuous: true,
-      profile,
-    };
-    const cancellation: ICancellationToken = {
-      isCancellationRequested: false,
-      onCancellationRequested,
-    };
-
-    // Act
-    set.mock.resetCalls();
-    watchedTests.set = set;
-    handleRunRequest(controller, request, cancellation, getConfig, watchedTests);
-
-    // Assert
-    assert.strictEqual(set.mock.callCount(), 1);
-    assert.strictEqual(set.mock.calls[0].arguments[0], 'ALL');
-    assert.strictEqual(set.mock.calls[0].arguments[1], profile);
-  });
-
-  it('should set keys in watchedTests when specific tests are requested to be watched', () => {
-    // Arrange
-    const profile: ITestRunProfile = {};
-    const request: ITestRunRequest = {
-      include: [item],
-      exclude: undefined,
-      continuous: true,
-      profile,
-    };
-    const cancellation: ICancellationToken = {
-      isCancellationRequested: false,
-      onCancellationRequested,
-    };
-
-    // Act
-    set.mock.resetCalls();
-    watchedTests.set = set;
-    handleRunRequest(controller, request, cancellation, getConfig, watchedTests);
-
-    // Assert
-    assert.strictEqual(set.mock.callCount(), 1);
-    assert.strictEqual(set.mock.calls[0].arguments[0], item);
-    assert.strictEqual(set.mock.calls[0].arguments[1], profile);
-  });
-
-  it('should not start running tests if a watch (continuous) request is made', () => {
-    // Arrange
-    const request: ITestRunRequest = {
-      include: undefined,
-      exclude: undefined,
-      continuous: true,
-      profile: undefined,
-    };
-    const cancellation: ICancellationToken = {
-      isCancellationRequested: false,
-      onCancellationRequested,
-    };
-
-    // Act
-    createTestRun.mock.resetCalls();
-    handleRunRequest(controller, request, cancellation, getConfig, watchedTests);
-
-    // Assert
-    assert.strictEqual(createTestRun.mock.callCount(), 0, 'createTestRun should not have been called');
-  });
-
-  it('should delete key ALL in watchedTests when watched tests are cancelled', async () => {
-    // Arrange
-    const profile: ITestRunProfile = {};
-    const request: ITestRunRequest = {
-      include: undefined,
-      exclude: undefined,
-      continuous: true,
-      profile,
-    };
-    const cancellation: ICancellationToken = {
-      isCancellationRequested: false,
-      onCancellationRequested,
-    };
-
-    // Act
-    set.mock.resetCalls();
-    deleteMock.mock.resetCalls();
-    watchedTests.set = set;
-    watchedTests.delete = deleteMock;
-    handleRunRequest(controller, request, cancellation, getConfig, watchedTests);
-    console.log(listenerMock);
-    listenerMock({});
-
-    // Assert
-    assert.strictEqual(deleteMock.mock.callCount(), 1);
-    assert.strictEqual(deleteMock.mock.calls[0].arguments[0], 'ALL');
-  });
-
-  it('should set keys in watchedTests when specific tests are requested to be watched', () => {
-    // Arrange
-    const profile: ITestRunProfile = {};
-    const request: ITestRunRequest = {
-      include: [item],
-      exclude: undefined,
-      continuous: true,
-      profile,
-    };
-    const cancellation: ICancellationToken = {
-      isCancellationRequested: false,
-      onCancellationRequested,
-    };
-
-    // Act
-    set.mock.resetCalls();
-    watchedTests.set = set;
-    handleRunRequest(controller, request, cancellation, getConfig, watchedTests);
-
-    // Assert
-    assert.strictEqual(set.mock.callCount(), 1);
-    assert.strictEqual(set.mock.calls[0].arguments[0], item);
-    assert.strictEqual(set.mock.calls[0].arguments[1], profile);
   });
 });
 

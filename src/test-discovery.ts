@@ -2,11 +2,9 @@ import path from 'node:path';
 
 import { minimatch } from 'minimatch';
 
-import { placeTestsInQueue, runTestQueue } from './queue-tests';
 import { regoTestFileParser } from './rego-test-file-parser';
 import {
   IFindFilesFunc,
-  ICancellationToken,
   ITestController,
   ITestItem,
   ITestRunRequest,
@@ -25,35 +23,6 @@ import {
 import { Newable } from './vscode-classes';
 
 const textDecoder = new TextDecoder('utf-8');
-
-export const handleRunRequest = (
-  controller: ITestController,
-  request: ITestRunRequest,
-  cancellation: ICancellationToken,
-  getConfig: IGetConfigFunc,
-  watchedTests: Map<ITestItem | 'ALL', ITestRunProfile | undefined>,
-) => {
-  // If the request is a regular, ad-hoc request to run tests immediately,
-  // then start a new test run.
-  if (!request.continuous) {
-    const { cwd, policyTestDir, opaCommand, showEnhancedErrors } = getConfig();
-    startTestRun(controller, request, cwd, policyTestDir, opaCommand, showEnhancedErrors);
-  } else {
-    // When dealing with a request to continouly run tests as files change,
-    // we add these files to those which we're watching. Then, when a file
-    // changes, we can check to see whether we need to run a test for this file
-    // or not.
-    // A special case is the ALL case, which is where we have a continous test,
-    // but no tests included.
-    if (request.include === undefined) {
-      watchedTests.set('ALL', request.profile);
-      cancellation.onCancellationRequested(() => watchedTests.delete('ALL'));
-    } else {
-      request.include.forEach((item) => watchedTests.set(item, request.profile));
-      cancellation.onCancellationRequested(() => request.include!.forEach((item) => watchedTests.delete(item)));
-    }
-  }
-};
 
 export const updateWorkspaceTestFile = (
   controller: ITestController,
@@ -128,61 +97,6 @@ export const refreshTestFile = async (
   registerTestItemCasesFromFile(controller, item, content);
 
   return item;
-};
-
-export const startTestRun = async (
-  controller: ITestController,
-  request: ITestRunRequest,
-  cwd: string | undefined,
-  policyTestDir: string,
-  opaCommand: string = 'opa',
-  showEnhancedErrors: boolean = false,
-) => {
-  const testRun = controller.createTestRun(request);
-  const items: ITestItem[] = [];
-
-  controller.items.forEach((item) => {
-    item.children.forEach((child) => items.push(child));
-    items.push(item);
-  });
-
-  const queue = placeTestsInQueue(items, request, testRun);
-  await runTestQueue(testRun, queue, cwd, policyTestDir, opaCommand, showEnhancedErrors);
-};
-
-export const handleFileChanged = (
-  controller: ITestController,
-  TestRunRequest: Newable<ITestRunRequest>,
-  uri: IUri,
-  watchedTests: Map<ITestItem | 'ALL', ITestRunProfile | undefined>,
-  cwd: string | undefined,
-  policyTestDir: string,
-  opaCommand?: string,
-): void => {
-  if (watchedTests.has('ALL')) {
-    startTestRun(
-      controller,
-      new TestRunRequest(undefined, undefined, watchedTests.get('ALL'), true),
-      cwd,
-      policyTestDir,
-      opaCommand,
-    );
-    return;
-  }
-
-  const include: ITestItem[] = [];
-  let profile: ITestRunProfile | undefined;
-  for (const [item, thisProfile] of watchedTests) {
-    const cast = item as ITestItem;
-    if (cast.uri?.toString() === uri.toString()) {
-      include.push(cast);
-      profile = thisProfile;
-    }
-  }
-
-  if (include.length) {
-    startTestRun(controller, new TestRunRequest(include, undefined, profile, true), cwd, policyTestDir, opaCommand);
-  }
 };
 
 export const setupFileSystemWatchers = (
