@@ -28,7 +28,7 @@ import {
   setupFileSystemWatchers,
   updateWorkspaceTestFile,
 } from './test-discovery';
-import { TestItemCollection, Uri } from './test-classes';
+import { TestItemCollection, Uri } from './testing-utils';
 
 class Range implements IRange {
   constructor(
@@ -70,7 +70,6 @@ const item: ITestItem = {
 let listenerMock: (e: any) => any;
 const onCancellationRequested = mock.fn(
   (listener: (e: any) => any, thisArgs?: any, disposables?: IDisposable[]): IDisposable => {
-    console.log(listener);
     listenerMock = listener;
     return { dispose: (): void => {} };
   },

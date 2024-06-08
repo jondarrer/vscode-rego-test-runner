@@ -1,0 +1,86 @@
+FAILURES
+--------------------------------------------------------------------------------
+data.duplicates.all_duplicates_1_test.test_get_anonymous_denied#01: FAIL (45.583µs)
+
+  query:1                                                      Enter data.duplicates.all_duplicates_1_test["test_get_anonymous_denied#01"] = _
+  sample/policies/duplicates/all_duplicates_2_test.rego:11     | Enter data.duplicates.all_duplicates_1_test["test_get_anonymous_denied#01"]
+  sample/policies/duplicates/all_duplicates_2_test.rego:12     | | Fail data.duplicates.sample.allow with input as {"method": "GET", "path": ["users"]}
+  query:1                                                      | Fail data.duplicates.all_duplicates_1_test["test_get_anonymous_denied#01"] = _
+
+data.failed.all_failed_1_test.test_post_allowed: FAIL (2.390959ms)
+
+  query:1                                             Enter data.failed.all_failed_1_test.test_post_allowed = _
+  sample/policies/failed/all_failed_1_test.rego:7     | Enter data.failed.all_failed_1_test.test_post_allowed
+  sample/policies/failed/all_failed_1_test.rego:8     | | Fail not data.failed.sample.allow with input as {"method": "POST", "path": ["users"]}
+  query:1                                             | Fail data.failed.all_failed_1_test.test_post_allowed = _
+
+data.failed.all_failed_2_test.test_post_allowed: FAIL (65.916µs)
+
+  query:1                                             Enter data.failed.all_failed_2_test.test_post_allowed = _
+  sample/policies/failed/all_failed_2_test.rego:7     | Enter data.failed.all_failed_2_test.test_post_allowed
+  sample/policies/failed/all_failed_2_test.rego:8     | | Fail not data.failed.sample.allow with input as {"method": "POST", "path": ["users"]}
+  query:1                                             | Fail data.failed.all_failed_2_test.test_post_allowed = _
+
+data.failed.all_failed_2_test.test_get_anonymous_denied: FAIL (52.958µs)
+
+  query:1                                              Enter data.failed.all_failed_2_test.test_get_anonymous_denied = _
+  sample/policies/failed/all_failed_2_test.rego:11     | Enter data.failed.all_failed_2_test.test_get_anonymous_denied
+  sample/policies/failed/all_failed_2_test.rego:12     | | Fail data.failed.sample.allow with input as {"method": "GET", "path": ["users"]}
+  query:1                                              | Fail data.failed.all_failed_2_test.test_get_anonymous_denied = _
+
+data.mixed.all_mixed_1_test.test_get_anonymous_denied: FAIL (43.667µs)
+
+  query:1                                            Enter data.mixed.all_mixed_1_test.test_get_anonymous_denied = _
+  sample/policies/mixed/all_mixed_1_test.rego:11     | Enter data.mixed.all_mixed_1_test.test_get_anonymous_denied
+  sample/policies/mixed/all_mixed_1_test.rego:12     | | Fail data.mixed.sample.allow with input as {"method": "GET", "path": ["users"]}
+  query:1                                            | Fail data.mixed.all_mixed_1_test.test_get_anonymous_denied = _
+
+data.mixed.all_mixed_2_test.test_post_allowed: FAIL (51.125µs)
+
+  query:1                                           Enter data.mixed.all_mixed_2_test.test_post_allowed = _
+  sample/policies/mixed/all_mixed_2_test.rego:7     | Enter data.mixed.all_mixed_2_test.test_post_allowed
+  sample/policies/mixed/all_mixed_2_test.rego:8     | | Fail not data.mixed.sample.allow with input as {"method": "POST", "path": ["users"]}
+  query:1                                           | Fail data.mixed.all_mixed_2_test.test_post_allowed = _
+
+SUMMARY
+--------------------------------------------------------------------------------
+sample/policies/duplicates/all_duplicates_1_test.rego:
+data.duplicates.all_duplicates_1_test.test_post_allowed: PASS (4.56875ms)
+data.duplicates.all_duplicates_1_test.test_get_anonymous_denied: PASS (56.625µs)
+
+sample/policies/duplicates/all_duplicates_2_test.rego:
+data.duplicates.all_duplicates_1_test.test_post_allowed#01: PASS (59.917µs)
+data.duplicates.all_duplicates_1_test.test_get_anonymous_denied#01: FAIL (45.583µs)
+
+sample/policies/failed/all_failed_1_test.rego:
+data.failed.all_failed_1_test.test_post_allowed: FAIL (2.390959ms)
+
+sample/policies/failed/all_failed_2_test.rego:
+data.failed.all_failed_2_test.test_post_allowed: FAIL (65.916µs)
+data.failed.all_failed_2_test.test_get_anonymous_denied: FAIL (52.958µs)
+
+sample/policies/mixed/all_mixed_1_test.rego:
+data.mixed.all_mixed_1_test.test_post_allowed: PASS (59.208µs)
+data.mixed.all_mixed_1_test.test_get_anonymous_denied: FAIL (43.667µs)
+
+sample/policies/mixed/all_mixed_2_test.rego:
+data.mixed.all_mixed_2_test.test_post_allowed: FAIL (51.125µs)
+data.mixed.all_mixed_2_test.test_get_anonymous_denied: PASS (458.709µs)
+
+sample/policies/passed/all_passed_1_test.rego:
+data.passed.all_passed_1_test.test_post_allowed: PASS (89.958µs)
+
+sample/policies/passed/all_passed_2_test.rego:
+data.passed.all_passed_2_test.test_post_allowed: PASS (63.875µs)
+data.passed.all_passed_2_test.test_get_anonymous_denied: PASS (51.583µs)
+
+sample/policies/todo/all_todo_1_test.rego:
+data.todo.all_todo_1_test.todo_test_post_allowed: SKIPPED
+
+sample/policies/todo/all_todo_2_test.rego:
+data.todo.all_todo_2_test.todo_test_post_allowed: SKIPPED
+data.todo.all_todo_2_test.todo_test_get_anonymous_denied: SKIPPED
+--------------------------------------------------------------------------------
+PASS: 8/17
+FAIL: 6/17
+SKIPPED: 3/17

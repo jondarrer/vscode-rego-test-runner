@@ -1,0 +1,29 @@
+[
+  {
+    "location": {
+      "file": "sample/policies/todo/all_todo_1_test.rego"
+    },
+    "package": "data.todo.all_todo_1_test",
+    "name": "todo_test_post_allowed",
+    "skip": true,
+    "duration": 0
+  },
+  {
+    "location": {
+      "file": "sample/policies/todo/all_todo_2_test.rego"
+    },
+    "package": "data.todo.all_todo_2_test",
+    "name": "todo_test_post_allowed",
+    "skip": true,
+    "duration": 0
+  },
+  {
+    "location": {
+      "file": "sample/policies/todo/all_todo_2_test.rego"
+    },
+    "package": "data.todo.all_todo_2_test",
+    "name": "todo_test_get_anonymous_denied",
+    "skip": true,
+    "duration": 0
+  }
+]

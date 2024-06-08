@@ -1,0 +1,26 @@
+[
+  {
+    "location": {
+      "file": "sample/policies/passed/all_passed_1_test.rego"
+    },
+    "package": "data.passed.all_passed_1_test",
+    "name": "test_post_allowed",
+    "duration": 0.162542
+  },
+  {
+    "location": {
+      "file": "sample/policies/passed/all_passed_2_test.rego"
+    },
+    "package": "data.passed.all_passed_2_test",
+    "name": "test_post_allowed",
+    "duration": 0.062959
+  },
+  {
+    "location": {
+      "file": "sample/policies/passed/all_passed_2_test.rego"
+    },
+    "package": "data.passed.all_passed_2_test",
+    "name": "test_get_anonymous_denied",
+    "duration": 0.082084
+  }
+]

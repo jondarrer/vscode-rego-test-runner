@@ -13,12 +13,12 @@ import {
   ITestRunRequest,
   IUri,
 } from './types';
-import { TestItemCollection, Uri } from './test-classes';
+import { TestItemCollection, Uri } from './testing-utils';
 
 let listenerMock: (e: any) => any;
 const onCancellationRequested = mock.fn(
   (listener: (e: any) => any, thisArgs?: any, disposables?: IDisposable[]): IDisposable => {
-    console.log(listener);
+    listener;
     listenerMock = listener;
     return { dispose: (): void => {} };
   },
@@ -255,7 +255,6 @@ describe('handleRunRequest', () => {
     watchedTests.set = set;
     watchedTests.delete = deleteMock;
     handleRunRequest(controller, request, cancellation, getConfig, watchedTests);
-    console.log(listenerMock);
     listenerMock({});
 
     // Assert

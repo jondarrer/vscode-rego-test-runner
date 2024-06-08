@@ -1,4 +1,4 @@
-package sample
+package passed.sample
 
 import rego.v1
 

@@ -1,0 +1,8 @@
+sample/policies/passed/all_passed_1_test.rego:
+data.passed.all_passed_1_test.test_post_allowed: PASS (162.542µs)
+
+sample/policies/passed/all_passed_2_test.rego:
+data.passed.all_passed_2_test.test_post_allowed: PASS (62.959µs)
+data.passed.all_passed_2_test.test_get_anonymous_denied: PASS (82.084µs)
+--------------------------------------------------------------------------------
+PASS: 3/3

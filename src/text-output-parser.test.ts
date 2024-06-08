@@ -1,102 +1,120 @@
-import { afterEach, describe, it, mock } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { textOutputParser } from './text-output-parser';
 import { IOpaTestResult, IUri } from './types';
-import { Uri } from './test-classes';
-
-const OUTPUT_TEST_PASSED = `sample/policies/sample/sample_test.rego:
-data.sample_test.test_post_allowed: PASS (7.445541ms)
---------------------------------------------------------------------------------
-PASS: 1/1`;
-
-const OUTPUT_TEST_FAILED = `FAILURES
---------------------------------------------------------------------------------
-data.sample_test.test_post_allowed: FAIL (4981.375µs)
-
-  query:1                                       Enter data.sample_test.test_post_allowed = _
-  sample/policies/sample/sample_test.rego:7     | Enter data.sample_test.test_post_allowed
-  sample/policies/sample/sample_test.rego:8     | | Fail not data.sample.allow with input as {"method": "POST", "path": ["users"]}
-  query:1                                       | Fail data.sample_test.test_post_allowed = _
-
-SUMMARY
---------------------------------------------------------------------------------
-sample/policies/sample/sample_test.rego:
-data.sample_test.test_post_allowed: FAIL (4981.375µs)
---------------------------------------------------------------------------------
-FAIL: 1/1`;
-
-const OUTPUT_TEST_ERRORED = `1 error occurred during loading: sample/policies/sample/sample_test.rego:8: rego_parse_error: unexpected identifier token: expected \n or ; or }
-no sample.allow with input as {"path": ["users"], "method": "POST"}
-   ^`;
-
-const RESULT_TEST_PASSED: IOpaTestResult = {
-  location: {
-    file: 'sample/policies/sample/sample_test.rego',
-  },
-  package: 'data.sample_test',
-  name: 'test_post_allowed',
-  duration: 7.445541,
-};
-
-const RESULT_TEST_FAILED: IOpaTestResult = {
-  location: {
-    file: 'sample/policies/sample/sample_test.rego',
-  },
-  package: 'data.sample_test',
-  name: 'test_post_allowed',
-  fail: true,
-  duration: 4.981375,
-  output: `data.sample_test.test_post_allowed: FAIL (4981.375µs)
-
-  query:1                                       Enter data.sample_test.test_post_allowed = _
-  sample/policies/sample/sample_test.rego:7     | Enter data.sample_test.test_post_allowed
-  sample/policies/sample/sample_test.rego:8     | | Fail not data.sample.allow with input as {"method": "POST", "path": ["users"]}
-  query:1                                       | Fail data.sample_test.test_post_allowed = _`,
-};
-
-const RESULT_TEST_ERRORED: IOpaTestResult = {
-  location: {
-    file: 'sample/policies/sample/sample_test.rego',
-  },
-  package: 'data.sample_test',
-  name: 'test_post_allowed',
-  fail: true,
-  duration: 0,
-  output: `1 error occurred during loading: sample/policies/sample/sample_test.rego:8: rego_parse_error: unexpected identifier token: expected \n or ; or }
-no sample.allow with input as {"path": ["users"], "method": "POST"}
-   ^`,
-};
+import { getExpectedResult, getTestingData, Uri } from './testing-utils';
 
 describe('textOutputParser', () => {
   const cwd = '/path/to';
   const uri: IUri = new Uri('file', '/path/to/sample/policies/sample/sample_test.rego');
-  const testId = 'data.sample_test.test_post_allowed';
 
-  it('parses a passed test', () => {
-    // Arrange & Act
-    const results = textOutputParser(OUTPUT_TEST_PASSED, cwd, uri, testId);
+  it('parses passed tests', () => {
+    // Arrange
+    const output = getTestingData('passed');
+    const expected = getExpectedResult('passed') as IOpaTestResult[];
+
+    // Act
+    const results = textOutputParser(output, cwd, uri);
 
     // Assert
-    assert.ok(results);
-    assert.strictEqual(results.length, 1);
-    assert.deepStrictEqual(results[0], RESULT_TEST_PASSED);
+    for (let i = 0; i < expected.length; i++) {
+      const testId = `${expected[i].package}.${expected[i].name}`;
+      assert.strictEqual((results as Map<string, IOpaTestResult>).has(testId), true);
+      assert.deepStrictEqual((results as Map<string, IOpaTestResult>).get(testId), expected[i]);
+    }
   });
-  it('parses a failed test', () => {
-    // Arrange & Act
-    const results = textOutputParser(OUTPUT_TEST_FAILED, cwd, uri, testId);
+  it('parses failed tests', () => {
+    // Arrange
+    const output = getTestingData('failed');
+    const expected = getExpectedResult('failed') as IOpaTestResult[];
+
+    // Act
+    const results = textOutputParser(output, cwd, uri);
 
     // Assert
-    assert.ok(results);
-    assert.strictEqual(results.length, 1);
-    assert.deepStrictEqual(results[0], RESULT_TEST_FAILED);
+    for (let i = 0; i < expected.length; i++) {
+      const testId = `${expected[i].package}.${expected[i].name}`;
+      assert.strictEqual(results.has(testId), true);
+      assert.deepStrictEqual(results.get(testId), expected[i]);
+    }
   });
-  it('parses an errored test', () => {
-    // Arrange & Act
-    const results = textOutputParser(OUTPUT_TEST_ERRORED, cwd, uri, testId);
+  it('parses errored tests', () => {
+    // Arrange
+    const output = getTestingData('errored');
+    const expected = getExpectedResult('errored') as { message: string };
+
+    // Act & Assert
+    assert.throws(() => textOutputParser(output, cwd, uri), new Error(expected.message));
+  });
+  it('parses duplicates tests', () => {
+    // Arrange
+    const output = getTestingData('duplicates');
+    const expected = getExpectedResult('duplicates') as IOpaTestResult[];
+
+    // Act
+    const results = textOutputParser(output, cwd, uri);
 
     // Assert
-    assert.ok(results);
-    assert.strictEqual(results.length, 1);
-    assert.deepStrictEqual(results[0], RESULT_TEST_ERRORED);
+    for (let i = 0; i < expected.length; i++) {
+      const testId = `${expected[i].package}.${expected[i].name}`;
+      assert.strictEqual(results.has(testId), true);
+      assert.deepStrictEqual(results.get(testId), expected[i]);
+    }
+  });
+  it('parses mixed tests', () => {
+    // Arrange
+    const output = getTestingData('mixed');
+    const expected = getExpectedResult('mixed') as IOpaTestResult[];
+
+    // Act
+    const results = textOutputParser(output, cwd, uri);
+
+    // Assert
+    for (let i = 0; i < expected.length; i++) {
+      const testId = `${expected[i].package}.${expected[i].name}`;
+      assert.strictEqual(results.has(testId), true);
+      assert.deepStrictEqual(results.get(testId), expected[i]);
+    }
+  });
+  it('parses no tests tests', () => {
+    // Arrange
+    const output = getTestingData('no_tests');
+    const expected = getExpectedResult('no_tests') as IOpaTestResult[];
+
+    // Act
+    const results = textOutputParser(output, cwd, uri);
+
+    // Assert
+    assert.strictEqual(results.size, expected.length);
+  });
+  it('parses todo tests', () => {
+    // Arrange
+    const output = getTestingData('todo');
+    const expected = getExpectedResult('todo') as IOpaTestResult[];
+
+    // Act
+    const results = textOutputParser(output, cwd, uri);
+
+    // Assert
+    for (let i = 0; i < expected.length; i++) {
+      const testId = `${expected[i].package}.${expected[i].name}`;
+      assert.strictEqual(results.has(testId), true);
+      assert.deepStrictEqual(results.get(testId), expected[i]);
+    }
+  });
+  it('parses all tests', () => {
+    // Arrange
+    const output = getTestingData('all');
+    const expected = getExpectedResult('all') as IOpaTestResult[];
+
+    // Act
+    const results = textOutputParser(output, cwd, uri);
+
+    // Assert
+    for (let i = 0; i < expected.length; i++) {
+      const testId = `${expected[i].package}.${expected[i].name}`;
+      assert.strictEqual(results.has(testId), true, `should have result for test "${testId}"`);
+      assert.deepStrictEqual(results.get(testId), expected[i]);
+    }
   });
 });

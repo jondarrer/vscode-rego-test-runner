@@ -1,0 +1,153 @@
+[
+  {
+    "location": {
+      "file": "sample/policies/duplicates/all_duplicates_1_test.rego"
+    },
+    "package": "data.duplicates.all_duplicates_1_test",
+    "name": "test_post_allowed",
+    "duration": 4.56875
+  },
+  {
+    "location": {
+      "file": "sample/policies/duplicates/all_duplicates_1_test.rego"
+    },
+    "package": "data.duplicates.all_duplicates_1_test",
+    "name": "test_get_anonymous_denied",
+    "duration": 0.056625
+  },
+  {
+    "location": {
+      "file": "sample/policies/duplicates/all_duplicates_2_test.rego"
+    },
+    "package": "data.duplicates.all_duplicates_1_test",
+    "name": "test_post_allowed#01",
+    "duration": 0.059917000000000005
+  },
+  {
+    "location": {
+      "file": "sample/policies/duplicates/all_duplicates_2_test.rego"
+    },
+    "package": "data.duplicates.all_duplicates_1_test",
+    "name": "test_get_anonymous_denied#01",
+    "fail": true,
+    "duration": 0.045583,
+    "output": "  query:1                                                      Enter data.duplicates.all_duplicates_1_test[\"test_get_anonymous_denied#01\"] = _\n  sample/policies/duplicates/all_duplicates_2_test.rego:11     | Enter data.duplicates.all_duplicates_1_test[\"test_get_anonymous_denied#01\"]\n  sample/policies/duplicates/all_duplicates_2_test.rego:12     | | Fail data.duplicates.sample.allow with input as {\"method\": \"GET\", \"path\": [\"users\"]}\n  query:1                                                      | Fail data.duplicates.all_duplicates_1_test[\"test_get_anonymous_denied#01\"] = _"
+  },
+  {
+    "location": {
+      "file": "sample/policies/failed/all_failed_1_test.rego"
+    },
+    "package": "data.failed.all_failed_1_test",
+    "name": "test_post_allowed",
+    "fail": true,
+    "duration": 2.390959,
+    "output": "  query:1                                             Enter data.failed.all_failed_1_test.test_post_allowed = _\n  sample/policies/failed/all_failed_1_test.rego:7     | Enter data.failed.all_failed_1_test.test_post_allowed\n  sample/policies/failed/all_failed_1_test.rego:8     | | Fail not data.failed.sample.allow with input as {\"method\": \"POST\", \"path\": [\"users\"]}\n  query:1                                             | Fail data.failed.all_failed_1_test.test_post_allowed = _"
+  },
+  {
+    "location": {
+      "file": "sample/policies/failed/all_failed_2_test.rego"
+    },
+    "package": "data.failed.all_failed_2_test",
+    "name": "test_post_allowed",
+    "fail": true,
+    "duration": 0.065916,
+    "output": "  query:1                                             Enter data.failed.all_failed_2_test.test_post_allowed = _\n  sample/policies/failed/all_failed_2_test.rego:7     | Enter data.failed.all_failed_2_test.test_post_allowed\n  sample/policies/failed/all_failed_2_test.rego:8     | | Fail not data.failed.sample.allow with input as {\"method\": \"POST\", \"path\": [\"users\"]}\n  query:1                                             | Fail data.failed.all_failed_2_test.test_post_allowed = _"
+  },
+  {
+    "location": {
+      "file": "sample/policies/failed/all_failed_2_test.rego"
+    },
+    "package": "data.failed.all_failed_2_test",
+    "name": "test_get_anonymous_denied",
+    "fail": true,
+    "duration": 0.052958,
+    "output": "  query:1                                              Enter data.failed.all_failed_2_test.test_get_anonymous_denied = _\n  sample/policies/failed/all_failed_2_test.rego:11     | Enter data.failed.all_failed_2_test.test_get_anonymous_denied\n  sample/policies/failed/all_failed_2_test.rego:12     | | Fail data.failed.sample.allow with input as {\"method\": \"GET\", \"path\": [\"users\"]}\n  query:1                                              | Fail data.failed.all_failed_2_test.test_get_anonymous_denied = _"
+  },
+  {
+    "location": {
+      "file": "sample/policies/mixed/all_mixed_1_test.rego"
+    },
+    "package": "data.mixed.all_mixed_1_test",
+    "name": "test_post_allowed",
+    "duration": 0.059208
+  },
+  {
+    "location": {
+      "file": "sample/policies/mixed/all_mixed_1_test.rego"
+    },
+    "package": "data.mixed.all_mixed_1_test",
+    "name": "test_get_anonymous_denied",
+    "fail": true,
+    "duration": 0.043667000000000004,
+    "output": "  query:1                                            Enter data.mixed.all_mixed_1_test.test_get_anonymous_denied = _\n  sample/policies/mixed/all_mixed_1_test.rego:11     | Enter data.mixed.all_mixed_1_test.test_get_anonymous_denied\n  sample/policies/mixed/all_mixed_1_test.rego:12     | | Fail data.mixed.sample.allow with input as {\"method\": \"GET\", \"path\": [\"users\"]}\n  query:1                                            | Fail data.mixed.all_mixed_1_test.test_get_anonymous_denied = _"
+  },
+  {
+    "location": {
+      "file": "sample/policies/mixed/all_mixed_2_test.rego"
+    },
+    "package": "data.mixed.all_mixed_2_test",
+    "name": "test_post_allowed",
+    "fail": true,
+    "duration": 0.051125,
+    "output": "  query:1                                           Enter data.mixed.all_mixed_2_test.test_post_allowed = _\n  sample/policies/mixed/all_mixed_2_test.rego:7     | Enter data.mixed.all_mixed_2_test.test_post_allowed\n  sample/policies/mixed/all_mixed_2_test.rego:8     | | Fail not data.mixed.sample.allow with input as {\"method\": \"POST\", \"path\": [\"users\"]}\n  query:1                                           | Fail data.mixed.all_mixed_2_test.test_post_allowed = _"
+  },
+  {
+    "location": {
+      "file": "sample/policies/mixed/all_mixed_2_test.rego"
+    },
+    "package": "data.mixed.all_mixed_2_test",
+    "name": "test_get_anonymous_denied",
+    "duration": 0.458709
+  },
+  {
+    "location": {
+      "file": "sample/policies/passed/all_passed_1_test.rego"
+    },
+    "package": "data.passed.all_passed_1_test",
+    "name": "test_post_allowed",
+    "duration": 0.089958
+  },
+  {
+    "location": {
+      "file": "sample/policies/passed/all_passed_2_test.rego"
+    },
+    "package": "data.passed.all_passed_2_test",
+    "name": "test_post_allowed",
+    "duration": 0.063875
+  },
+  {
+    "location": {
+      "file": "sample/policies/passed/all_passed_2_test.rego"
+    },
+    "package": "data.passed.all_passed_2_test",
+    "name": "test_get_anonymous_denied",
+    "duration": 0.051583
+  },
+  {
+    "location": {
+      "file": "sample/policies/todo/all_todo_1_test.rego"
+    },
+    "package": "data.todo.all_todo_1_test",
+    "name": "todo_test_post_allowed",
+    "skip": true,
+    "duration": 0
+  },
+  {
+    "location": {
+      "file": "sample/policies/todo/all_todo_2_test.rego"
+    },
+    "package": "data.todo.all_todo_2_test",
+    "name": "todo_test_post_allowed",
+    "skip": true,
+    "duration": 0
+  },
+  {
+    "location": {
+      "file": "sample/policies/todo/all_todo_2_test.rego"
+    },
+    "package": "data.todo.all_todo_2_test",
+    "name": "todo_test_get_anonymous_denied",
+    "skip": true,
+    "duration": 0
+  }
+]

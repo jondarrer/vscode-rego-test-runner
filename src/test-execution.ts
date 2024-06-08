@@ -151,7 +151,6 @@ export const runTestQueue = async (
       try {
         await runTests(item, testRun, cwd, policyTestDir, opaCommand, showEnhancedErrors);
       } catch (error) {
-        console.log(error);
         testRun.failed(item, new TestMessage((error as Error).message), 0);
       }
     }
@@ -192,7 +191,6 @@ export const executeTests = (
   } else {
     opaCmdArguments.push('--verbose');
   }
-  console.log([cwd, opaCommand, ...opaCmdArguments]);
 
   return spawn(opaCommand, opaCmdArguments, opaProcessOptions);
 };
@@ -203,12 +201,15 @@ export const convertResults = (
   item: ITestItem,
   cwd: string | undefined,
   showEnhancedErrors: boolean,
-): IOpaTestResult[] | undefined => {
+): Map<string, IOpaTestResult> | undefined => {
   try {
     if (showEnhancedErrors) {
-      return textOutputParser(results, cwd, item.uri, item.id);
+      return textOutputParser(results, cwd, item.uri);
     } else {
-      return JSON.parse(results);
+      const json = JSON.parse(results) as [IOpaTestResult];
+      const result = new Map<string, IOpaTestResult>();
+      json.forEach((item) => result.set(`${item.package}.${item.name}`, item));
+      return result;
     }
   } catch (error) {
     testRun.appendOutput(results);
@@ -299,7 +300,7 @@ export const processTestResult = (
   }
   let actual: IOpaTestResult | undefined;
   if (results) {
-    actual = extractResult(results, testId);
+    actual = results.has(testId) ? results.get(testId) : undefined;
   }
   if (actual && actual.output) {
     messages.push(new TestMessage(actual.output));

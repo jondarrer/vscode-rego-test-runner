@@ -1,0 +1,3 @@
+{
+  "message": "2 errors occurred during loading:\nsample/erroring-policies/errored/all_errored_1_test.rego:8: rego_parse_error: unexpected identifier token: expected \\n or ; or }\n        no sample.allow with input as {\"path\": [\"users\"], \"method\": \"POST\"}\n           ^\nsample/erroring-policies/errored/all_errored_2_test.rego:8: rego_parse_error: unexpected identifier token: expected \\n or ; or }\n        no sample.allow with input as {\"path\": [\"users\"], \"method\": \"POST\"}\n           ^"
+}

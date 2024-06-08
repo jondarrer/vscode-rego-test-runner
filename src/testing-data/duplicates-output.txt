@@ -1,0 +1,21 @@
+FAILURES
+--------------------------------------------------------------------------------
+data.duplicates.all_duplicates_1_test.test_get_anonymous_denied#01: FAIL (45.583µs)
+
+  query:1                                                              Enter data.duplicates.all_duplicates_1_test["test_get_anonymous_denied#01"] = _
+  sample/policies/duplicates/all_duplicates_2_test.rego:11     | Enter data.duplicates.all_duplicates_1_test["test_get_anonymous_denied#01"]
+  sample/policies/duplicates/all_duplicates_2_test.rego:12     | | Fail data.duplicates.sample.allow with input as {"method": "GET", "path": ["users"]}
+  query:1                                                              | Fail data.duplicates.all_duplicates_1_test["test_get_anonymous_denied#01"] = _
+
+SUMMARY
+--------------------------------------------------------------------------------
+sample/policies/duplicates/all_duplicates_1_test.rego:
+data.duplicates.all_duplicates_1_test.test_post_allowed: PASS (4.56875ms)
+data.duplicates.all_duplicates_1_test.test_get_anonymous_denied: PASS (56.625µs)
+
+sample/policies/duplicates/all_duplicates_2_test.rego:
+data.duplicates.all_duplicates_1_test.test_post_allowed#01: PASS (59.917µs)
+data.duplicates.all_duplicates_1_test.test_get_anonymous_denied#01: FAIL (45.583µs)
+--------------------------------------------------------------------------------
+PASS: 3/4
+FAIL: 1/4

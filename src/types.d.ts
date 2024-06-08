@@ -507,6 +507,7 @@ export interface IOpaTestResult {
   package: string;
   name: string;
   fail?: boolean;
+  skip?: boolean;
   duration: number;
   output?: string;
 }

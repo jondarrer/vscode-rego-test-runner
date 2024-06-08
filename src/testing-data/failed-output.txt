@@ -1,0 +1,33 @@
+FAILURES
+--------------------------------------------------------------------------------
+data.failed.all_failed_1_test.test_post_allowed: FAIL (3.154625ms)
+
+  query:1                                             Enter data.failed.all_failed_1_test.test_post_allowed = _
+  sample/policies/failed/all_failed_1_test.rego:7     | Enter data.failed.all_failed_1_test.test_post_allowed
+  sample/policies/failed/all_failed_1_test.rego:8     | | Fail not data.failed.sample.allow with input as {"method": "POST", "path": ["users"]}
+  query:1                                             | Fail data.failed.all_failed_1_test.test_post_allowed = _
+
+data.failed.all_failed_2_test.test_post_allowed: FAIL (86.083µs)
+
+  query:1                                             Enter data.failed.all_failed_2_test.test_post_allowed = _
+  sample/policies/failed/all_failed_2_test.rego:7     | Enter data.failed.all_failed_2_test.test_post_allowed
+  sample/policies/failed/all_failed_2_test.rego:8     | | Fail not data.failed.sample.allow with input as {"method": "POST", "path": ["users"]}
+  query:1                                             | Fail data.failed.all_failed_2_test.test_post_allowed = _
+
+data.failed.all_failed_2_test.test_get_anonymous_denied: FAIL (58.625µs)
+
+  query:1                                              Enter data.failed.all_failed_2_test.test_get_anonymous_denied = _
+  sample/policies/failed/all_failed_2_test.rego:11     | Enter data.failed.all_failed_2_test.test_get_anonymous_denied
+  sample/policies/failed/all_failed_2_test.rego:12     | | Fail data.failed.sample.allow with input as {"method": "GET", "path": ["users"]}
+  query:1                                              | Fail data.failed.all_failed_2_test.test_get_anonymous_denied = _
+
+SUMMARY
+--------------------------------------------------------------------------------
+sample/policies/failed/all_failed_1_test.rego:
+data.failed.all_failed_1_test.test_post_allowed: FAIL (3.154625ms)
+
+sample/policies/failed/all_failed_2_test.rego:
+data.failed.all_failed_2_test.test_post_allowed: FAIL (86.083µs)
+data.failed.all_failed_2_test.test_get_anonymous_denied: FAIL (58.625µs)
+--------------------------------------------------------------------------------
+FAIL: 3/3
