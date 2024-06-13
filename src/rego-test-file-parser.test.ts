@@ -6,7 +6,7 @@ import { regoTestFileParser } from './rego-test-file-parser';
 const onTestHandler = mock.fn((_packageName: string | null, _testName: string, _range: IRange): void => {});
 
 afterEach(() => {
-  mock.reset();
+  onTestHandler.mock.resetCalls();
 });
 
 describe('regoTestFileParser', () => {
@@ -78,5 +78,23 @@ not_a_test_either if {
 
     // Assert
     assert.strictEqual(onTestHandler.mock.calls.length, 3);
+  });
+  it('finds a todo test in a file with tests in it', () => {
+    // Arrange
+    const content = `package sample_test
+
+import rego.v1
+
+import data.sample
+
+todo_test_post_allowed if {
+	sample.allow with input as {"path": ["users"], "method": "POST"}
+}`;
+
+    // Act
+    regoTestFileParser(content, onTestHandler);
+
+    // Assert
+    assert.strictEqual(onTestHandler.mock.calls.length, 1);
   });
 });

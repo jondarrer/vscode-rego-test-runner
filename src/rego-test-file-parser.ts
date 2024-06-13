@@ -1,8 +1,7 @@
 import { Position, Range } from './test-classes';
 import { IOnTestHanderFunc, IRange } from './types';
 
-const TEST_BLOCK_REGEX = /^(test_\w*)/;
-//const TODO_TEST_OR_TEST_BLOCK_REGEX = /^((todo_)?test_\w*)/;
+const TODO_TEST_OR_TEST_BLOCK_REGEX = /^((todo_)?test_\w*)/;
 const PACKAGE_NAME_REGEX = /^package\s(\S*)/;
 
 export const regoTestFileParser = (content: string, onTestHandler: IOnTestHanderFunc): void => {
@@ -15,7 +14,7 @@ export const regoTestFileParser = (content: string, onTestHandler: IOnTestHander
       const matches = PACKAGE_NAME_REGEX.exec(line);
       packageName = matches && matches[1];
     } else {
-      const matches = TEST_BLOCK_REGEX.exec(line);
+      const matches = TODO_TEST_OR_TEST_BLOCK_REGEX.exec(line);
 
       if (matches) {
         const testName = matches[0];

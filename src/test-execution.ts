@@ -307,6 +307,8 @@ export const processTestResult = (
   }
   if (actual && actual.fail === true) {
     testRun.failed(item, messages, duration);
+  } else if (actual && actual.skip === true) {
+    testRun.skipped(item);
   } else if (actual) {
     testRun.passed(item, duration);
   } else {
