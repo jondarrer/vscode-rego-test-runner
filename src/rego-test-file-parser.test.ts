@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { IRange } from './types';
 import { regoTestFileParser } from './rego-test-file-parser';
 
-const onTestHandler = mock.fn((packageName: string | null, testName: string, range: IRange): void => {});
+const onTestHandler = mock.fn((_packageName: string | null, _testName: string, _range: IRange): void => {});
 
 afterEach(() => {
   mock.reset();

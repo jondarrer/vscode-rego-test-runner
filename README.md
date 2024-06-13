@@ -6,7 +6,7 @@ Run [Rego tests](https://www.openpolicyagent.org/docs/latest/policy-testing/) fo
 
 ## Features
 
-Simple way to run OPA Rego tests from within VS Code. Tests are policies which begin with `test_`.
+Simple way to run OPA Rego tests from within VS Code. Tests are policies which begin with `test_` or `todo_test_`.
 
 ## Requirements
 

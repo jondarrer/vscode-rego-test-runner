@@ -3,10 +3,13 @@ import * as vscode from 'vscode';
 import { refreshTestFile, refreshTestFiles, setupFileSystemWatchers, updateWorkspaceTestFile } from './test-discovery';
 import { handleRunRequest, handleFileChanged } from './test-execution';
 import { getConfig } from './config';
+import { INote } from './types';
 
 export async function activate(context: vscode.ExtensionContext) {
   const { testFilePatterns } = getConfig();
   const controller = vscode.tests.createTestController('RegoTestController', 'Rego');
+  const noteTracker = new Set<string>();
+
   context.subscriptions.push(controller);
 
   const watchedTests = new Map<vscode.TestItem | 'ALL', vscode.TestRunProfile | undefined>();
@@ -20,12 +23,24 @@ export async function activate(context: vscode.ExtensionContext) {
   controller.refreshHandler = async () => {
     // Get the config again, as it may have changed since the plugin was activated
     const { testFilePatterns } = getConfig();
+    const notes: INote[] = [];
+
     for (let testFilePattern of testFilePatterns) {
-      await refreshTestFiles(controller, testFilePattern, vscode.workspace.findFiles, vscode.workspace.fs.readFile);
+      await refreshTestFiles(
+        controller,
+        testFilePattern,
+        vscode.workspace.findFiles,
+        vscode.workspace.fs.readFile,
+        notes,
+      );
     }
+
+    displayNotes(notes, noteTracker);
   };
 
   controller.resolveHandler = async (item: vscode.TestItem | undefined) => {
+    const notes: INote[] = [];
+
     if (!item) {
       context.subscriptions.push(
         ...setupFileSystemWatchers(
@@ -34,18 +49,25 @@ export async function activate(context: vscode.ExtensionContext) {
           vscode.workspace.createFileSystemWatcher,
           vscode.workspace.fs.readFile,
           getConfig,
+          notes,
         ),
       );
 
       // Discover tests by going through documents in the workspace
       for (let testFilePattern of testFilePatterns) {
-        await refreshTestFiles(controller, testFilePattern, vscode.workspace.findFiles, vscode.workspace.fs.readFile);
+        await refreshTestFiles(
+          controller,
+          testFilePattern,
+          vscode.workspace.findFiles,
+          vscode.workspace.fs.readFile,
+          notes,
+        );
       }
-
-      return;
     } else if (item.uri) {
-      await refreshTestFile(controller, item.uri, vscode.workspace.fs.readFile);
+      await refreshTestFile(controller, item.uri, vscode.workspace.fs.readFile, notes);
     }
+
+    displayNotes(notes, noteTracker);
   };
 
   controller.createRunProfile(
@@ -72,3 +94,12 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
   );
 }
+
+const displayNotes = (notes: INote[], noteTracker: Set<string>) => {
+  for (let i = 0; i < notes.length; i++) {
+    // Only show messages which haven't already been shown
+    if (!noteTracker.has(`${notes[0].type}:${notes[0].message}`)) {
+      vscode.window.showWarningMessage(notes[i].message);
+    }
+  }
+};

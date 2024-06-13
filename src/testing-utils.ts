@@ -30,6 +30,7 @@ export class TestItemCollection implements ITestItemCollection {
   }
   size: number = 0;
   replace(items: readonly ITestItem[]): void {
+    console.log('replace', items);
     this.map.clear();
     for (let item of items) {
       this.map.set(item.id, item);

@@ -511,3 +511,8 @@ export interface IOpaTestResult {
   duration: number;
   output?: string;
 }
+
+export interface INote {
+  type: string;
+  message: string;
+}

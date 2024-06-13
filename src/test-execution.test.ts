@@ -17,15 +17,15 @@ import { TestItemCollection, Uri } from './testing-utils';
 
 let listenerMock: (e: any) => any;
 const onCancellationRequested = mock.fn(
-  (listener: (e: any) => any, thisArgs?: any, disposables?: IDisposable[]): IDisposable => {
+  (listener: (e: any) => any, _thisArgs?: any, _disposables?: IDisposable[]): IDisposable => {
     listener;
     listenerMock = listener;
     return { dispose: (): void => {} };
   },
 );
-const add = mock.fn((item: ITestItem): void => {});
-const get = mock.fn((itemId: string): ITestItem | undefined => undefined);
-const replace = mock.fn((items: ITestItem[]): void => {});
+const add = mock.fn((_item: ITestItem): void => {});
+const get = mock.fn((_itemId: string): ITestItem | undefined => undefined);
+const replace = mock.fn((_items: ITestItem[]): void => {});
 const items = new TestItemCollection(new Map<string, ITestItem>());
 mock.method(items, 'get', get);
 mock.method(items, 'add', add);
@@ -57,15 +57,15 @@ const testRun: ITestRun = {
   token: {
     isCancellationRequested: false,
     onCancellationRequested: mock.fn(
-      (listener: (e: any) => any, thisArgs?: any, disposables?: IDisposable[]): IDisposable => ({
+      (listener: (e: any) => any, _thisArgs?: any, _disposables?: IDisposable[]): IDisposable => ({
         dispose: (): void => {},
       }),
     ),
   },
 };
-const createTestItem = mock.fn((id: string, label: string, uri?: IUri): ITestItem => item);
-const createTestRun = mock.fn((request: ITestRunRequest, name?: string, persist?: boolean): ITestRun => testRun);
-const refreshHandler = mock.fn((token: ICancellationToken): Thenable<void> => Promise.resolve());
+const createTestItem = mock.fn((_id: string, _label: string, _uri?: IUri): ITestItem => item);
+const createTestRun = mock.fn((_request: ITestRunRequest, _name?: string, _persist?: boolean): ITestRun => testRun);
+const refreshHandler = mock.fn((_token: ICancellationToken): Thenable<void> => Promise.resolve());
 const controller: ITestController = {
   createTestItem,
   createTestRun,
@@ -74,13 +74,16 @@ const controller: ITestController = {
 };
 const watchedTests = new Map<ITestItem | 'ALL', ITestRunProfile | undefined>();
 const set = mock.fn(
-  (key: ITestItem | 'ALL', value: ITestRunProfile | undefined): Map<ITestItem | 'ALL', ITestRunProfile | undefined> => {
+  (
+    _key: ITestItem | 'ALL',
+    _value: ITestRunProfile | undefined,
+  ): Map<ITestItem | 'ALL', ITestRunProfile | undefined> => {
     return new Map<ITestItem | 'ALL', ITestRunProfile | undefined>();
   },
 );
 mock.method(watchedTests, 'set', set);
 watchedTests.set = set;
-const deleteMock = mock.fn((key: ITestItem | 'ALL'): boolean => true);
+const deleteMock = mock.fn((_key: ITestItem | 'ALL'): boolean => true);
 mock.method(watchedTests, 'delete', deleteMock);
 watchedTests.delete = deleteMock;
 
@@ -299,7 +302,7 @@ describe('placeTestsInQueue', () => {
     };
 
     // Act
-    const result = placeTestsInQueue(items, request, testRun);
+    placeTestsInQueue(items, request, testRun);
 
     // Assert
   });

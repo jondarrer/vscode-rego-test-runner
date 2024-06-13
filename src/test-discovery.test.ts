@@ -10,6 +10,7 @@ import {
   IFileSystemWatcher,
   IFindFilesFunc,
   IGetConfigFunc,
+  INote,
   IPosition,
   IRange,
   IReadFileFunc,
@@ -44,22 +45,14 @@ class Position implements IPosition {
   ) {}
 }
 
-const add = mock.fn((item: ITestItem): void => {});
-const get = mock.fn((itemId: string): ITestItem | undefined => undefined);
-const replace = mock.fn((items: ITestItem[]): void => {});
+const uri = new Uri('file', `path${path.sep}to${path.sep}test${path.sep}something_test.rego`);
 const children = new TestItemCollection(new Map<string, ITestItem>());
-mock.method(children, 'get', get);
-mock.method(children, 'add', add);
-mock.method(children, 'replace', replace);
 const items = new TestItemCollection(new Map<string, ITestItem>());
-mock.method(items, 'get', get);
-mock.method(items, 'add', add);
-mock.method(items, 'replace', replace);
 const item: ITestItem = {
-  id: '',
-  label: '',
+  id: uri.fsPath,
+  label: uri.fsPath.split(path.sep).pop() || '',
   children,
-  uri: undefined,
+  uri,
   range: undefined,
   busy: false,
   parent: undefined,
@@ -69,13 +62,25 @@ const item: ITestItem = {
 };
 let listenerMock: (e: any) => any;
 const onCancellationRequested = mock.fn(
-  (listener: (e: any) => any, thisArgs?: any, disposables?: IDisposable[]): IDisposable => {
+  (listener: (e: any) => any, _thisArgs?: any, _disposables?: IDisposable[]): IDisposable => {
     listenerMock = listener;
     return { dispose: (): void => {} };
   },
 );
-const createTestItem = mock.fn((id: string, label: string, uri?: IUri): ITestItem => item);
-const uri = new Uri('file', `path${path.sep}to${path.sep}test${path.sep}something_test.rego`);
+const createTestItem = mock.fn(
+  (id: string, label: string, uri?: IUri): ITestItem => ({
+    id,
+    label,
+    children: new TestItemCollection(new Map<string, ITestItem>()),
+    uri,
+    range: undefined,
+    busy: false,
+    parent: undefined,
+    tags: [],
+    canResolveChildren: false,
+    error: undefined,
+  }),
+);
 const testRun: ITestRun = {
   failed: mock.fn(),
   passed: mock.fn(),
@@ -86,8 +91,8 @@ const testRun: ITestRun = {
   end: mock.fn(),
   token: { isCancellationRequested: false, onCancellationRequested },
 };
-const createTestRun = mock.fn((request: ITestRunRequest, name?: string, persist?: boolean): ITestRun => testRun);
-const refreshHandler = mock.fn((token: ICancellationToken): Thenable<void> => Promise.resolve());
+const createTestRun = mock.fn((_request: ITestRunRequest, _name?: string, _persist?: boolean): ITestRun => testRun);
+const refreshHandler = mock.fn((_token: ICancellationToken): Thenable<void> => Promise.resolve());
 const controller: ITestController = {
   createTestItem,
   createTestRun,
@@ -109,15 +114,16 @@ watchedTests.delete = deleteMock;
 
 afterEach(() => {
   mock.reset();
+  controller.items.forEach((item) => controller.items.delete(item.id));
 });
 
 describe('registerTestItemFile', () => {
   it('returns the existing item', () => {
     // Arrange
-    get.mock.mockImplementation((itemId: string): ITestItem | undefined => item);
+    controller.items.add(item);
 
     // Act
-    const result = registerTestItemFile(controller, uri);
+    const result = registerTestItemFile(controller, item.uri || uri);
 
     // Assert
     assert.strictEqual(result, item);
@@ -135,10 +141,7 @@ describe('registerTestItemFile', () => {
       'something_test.rego',
       uri,
     ]);
-
-    // Not working right now, not sure why
-    // assert.strictEqual(add.mock.calls.length, 1, 'add should have been called once');
-    // assert.deepStrictEqual(add.mock.calls[0].arguments, [result]);
+    assert.strictEqual(result.id, uri.fsPath);
   });
 });
 
@@ -184,6 +187,7 @@ describe('updateWorkspaceTestFile', () => {
 describe('refreshTestFiles', () => {
   it('returns a list of TestItems for test files', async () => {
     // Arrange
+    const notes: INote[] = [];
     const other = new Uri('file', '/path/to/test/two/other_test.rego');
     const pattern = '**/*_test.rego';
     const findFiles: IFindFilesFunc = mock.fn(async (pattern: string): Promise<IUri[]> => {
@@ -192,7 +196,7 @@ describe('refreshTestFiles', () => {
     const readFile: IReadFileFunc = mock.fn(async (uri: IUri): Promise<Uint8Array> => new Uint8Array());
 
     // Act
-    const result = await refreshTestFiles(controller, pattern, findFiles, readFile);
+    const result = await refreshTestFiles(controller, pattern, findFiles, readFile, notes);
 
     // Assert
     assert.ok(result);
@@ -203,44 +207,69 @@ describe('refreshTestFiles', () => {
 describe('registerTestItemCasesFromFile', () => {
   it('returns an empty TestItemCollection for an empty file', () => {
     // Arrange
+    const notes: INote[] = [];
     const content = '';
 
     // Act
-    const result = registerTestItemCasesFromFile(controller, item, content);
+    const result = registerTestItemCasesFromFile(controller, item, content, notes);
 
     // Assert
     assert.ok(result);
     assert.strictEqual(result.size, 0);
   });
 
-  // Haven't got a proper mock for ITestItemCollection.size, which is why
-  // this test is currently failing
-  it.skip('returns a TestItemCollection for tests contained within a file', () => {
+  it('returns a TestItemCollection for tests contained within a file', () => {
     // Arrange
+    const notes: INote[] = [];
     const content = `package sample_test
 
-    import rego.v1
-    
-    import data.sample
-    
-    test_post_allowed if {
-      sample.allow with input as {"path": ["users"], "method": "POST"}
-    }
-    
-    test_get_anonymous_denied if {
-      not sample.allow with input as {"path": ["users"], "method": "GET"}
-    }
-    
-    test_get_user_allowed if {
-      sample.allow with input as {"path": ["users", "bob"], "method": "GET", "user_id": "bob"}
-    }`;
+import rego.v1
+
+import data.sample
+
+test_post_allowed if {
+  sample.allow with input as {"path": ["users"], "method": "POST"}
+}
+
+test_get_anonymous_denied if {
+  not sample.allow with input as {"path": ["users"], "method": "GET"}
+}
+
+test_get_user_allowed if {
+  sample.allow with input as {"path": ["users", "bob"], "method": "GET", "user_id": "bob"}
+}`;
 
     // Act
-    const result = registerTestItemCasesFromFile(controller, item, content);
+    const result = registerTestItemCasesFromFile(controller, item, content, notes);
 
     // Assert
     assert.ok(result);
     assert.strictEqual(result.size, 3);
+  });
+
+  it('Adds a "duplicate" note when identically named tests are contained within the same file', () => {
+    const notes: INote[] = [];
+    const content = `package sample_test
+
+import rego.v1
+
+import data.sample
+
+test_post_allowed if {
+  sample.allow with input as {"path": ["users"], "method": "POST"}
+}
+
+test_post_allowed if {
+  sample.allow with input as {"path": ["users"], "method": "POST"}
+}`;
+
+    // Act
+    const result = registerTestItemCasesFromFile(controller, item, content, notes);
+
+    // Assert
+    assert.ok(result);
+    assert.strictEqual(notes.length, 1);
+    assert.strictEqual(notes[0].type, 'duplicate');
   });
 });
 
@@ -270,10 +299,10 @@ describe('setupFileSystemWatchers', () => {
   );
   const createFileSystemWatcher = mock.fn(
     (
-      globPattern: GlobPatternType,
-      ignoreCreateEvents?: boolean,
-      ignoreChangeEvents?: boolean,
-      ignoreDeleteEvents?: boolean,
+      _globPattern: GlobPatternType,
+      _ignoreCreateEvents?: boolean,
+      _ignoreChangeEvents?: boolean,
+      _ignoreDeleteEvents?: boolean,
     ): IFileSystemWatcher => {
       return { onDidCreate, onDidChange, onDidDelete, dispose: () => {} };
     },
@@ -286,11 +315,12 @@ describe('setupFileSystemWatchers', () => {
 
   it('creates a watcher for each configured pattern', () => {
     // Arrange
+    const notes: INote[] = [];
     const fileChangedEmitter: IEventEmitter<IUri> = { fire: (data: IUri) => {} };
 
     // Act
     createFileSystemWatcher.mock.resetCalls();
-    setupFileSystemWatchers(controller, fileChangedEmitter, createFileSystemWatcher, readFile, getConfig);
+    setupFileSystemWatchers(controller, fileChangedEmitter, createFileSystemWatcher, readFile, getConfig, notes);
 
     // Assert
     assert.strictEqual(createFileSystemWatcher.mock.callCount(), 2);
@@ -299,6 +329,7 @@ describe('setupFileSystemWatchers', () => {
   });
   it('watchers watch create, change and delete events', () => {
     // Arrange
+    const notes: INote[] = [];
     const fileChangedEmitter: IEventEmitter<IUri> = { fire: (data: IUri) => {} };
 
     // Act
@@ -311,6 +342,7 @@ describe('setupFileSystemWatchers', () => {
       createFileSystemWatcher,
       readFile,
       getConfig,
+      notes,
     );
 
     // Assert
