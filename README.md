@@ -29,17 +29,17 @@ To install the extension, visit the Visual Studio Code Marketplace or search for
 
 - Automatic test discovery upon activation
 - Manually discover tests via the Refresh Tests feature
-- Watch tests - all tests, all tests within a file, and indiviual tests
+- Watch tests - all tests, all tests within a file, and individual tests
 - View verbose test failure message next to the failed test and in the Test Results pane
 - Run all tests within a file
 - Run tests individually
 - Run individual tests directly from within the test file
 - Run on either Mac, Linux or Windows
+- Handles todo tests, those prefixed with `todo_test_`, and skips them
 
 ## Planned features
 
-- [ ] Run all tests together
-- [ ] Handle todo tests, those prefixed with `todo_`, but which must be skipped
+- [ ] Display tests in a nested tree structure matching the filesystem location
 
 ## Other feature ideas
 
