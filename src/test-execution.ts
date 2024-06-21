@@ -198,13 +198,11 @@ export const executeTests = (
 export const convertResults = (
   testRun: ITestRun,
   results: string,
-  item: ITestItem,
-  cwd: string | undefined,
   showEnhancedErrors: boolean,
 ): Map<string, IOpaTestResult> | undefined => {
   try {
     if (showEnhancedErrors) {
-      return textOutputParser(results, cwd, item.uri);
+      return textOutputParser(results);
     } else {
       const json = JSON.parse(results) as [IOpaTestResult];
       const result = new Map<string, IOpaTestResult>();
@@ -270,7 +268,6 @@ export const runTests = async (
           end.getTime() - start.getTime(),
           item,
           testRun,
-          cwd,
           showEnhancedErrors,
         );
         resolve(actual);
@@ -289,12 +286,11 @@ export const processTestResult = (
   duration: number,
   item: ITestItem,
   testRun: ITestRun,
-  cwd: string | undefined,
   showEnhancedErrors: boolean,
-) => {
+): IOpaTestResult | undefined => {
   const messages: ITestMessage[] = [];
   const testId = item.id;
-  const results = convertResults(testRun, opaTestOutput.join(), item, cwd, showEnhancedErrors);
+  const results = convertResults(testRun, opaTestOutput.join(), showEnhancedErrors);
   if (opaErrorOutput.length > 0) {
     messages.push(new TestMessage(opaErrorOutput.join()));
   }

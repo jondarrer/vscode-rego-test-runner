@@ -5,16 +5,13 @@ import { IOpaTestResult, IUri } from './types';
 import { getExpectedResult, getTestingData, Uri } from './testing-utils';
 
 describe('textOutputParser', () => {
-  const cwd = '/path/to';
-  const uri: IUri = new Uri('file', '/path/to/sample/policies/sample/sample_test.rego');
-
   it('parses passed tests', () => {
     // Arrange
     const output = getTestingData('passed');
     const expected = getExpectedResult('passed') as IOpaTestResult[];
 
     // Act
-    const results = textOutputParser(output, cwd, uri);
+    const results = textOutputParser(output);
 
     // Assert
     for (let i = 0; i < expected.length; i++) {
@@ -29,7 +26,7 @@ describe('textOutputParser', () => {
     const expected = getExpectedResult('failed') as IOpaTestResult[];
 
     // Act
-    const results = textOutputParser(output, cwd, uri);
+    const results = textOutputParser(output);
 
     // Assert
     for (let i = 0; i < expected.length; i++) {
@@ -44,7 +41,7 @@ describe('textOutputParser', () => {
     const expected = getExpectedResult('errored') as { message: string };
 
     // Act & Assert
-    assert.throws(() => textOutputParser(output, cwd, uri), new Error(expected.message));
+    assert.throws(() => textOutputParser(output), new Error(expected.message));
   });
   it('parses duplicates tests', () => {
     // Arrange
@@ -52,7 +49,7 @@ describe('textOutputParser', () => {
     const expected = getExpectedResult('duplicates') as IOpaTestResult[];
 
     // Act
-    const results = textOutputParser(output, cwd, uri);
+    const results = textOutputParser(output);
 
     // Assert
     for (let i = 0; i < expected.length; i++) {
@@ -67,7 +64,7 @@ describe('textOutputParser', () => {
     const expected = getExpectedResult('mixed') as IOpaTestResult[];
 
     // Act
-    const results = textOutputParser(output, cwd, uri);
+    const results = textOutputParser(output);
 
     // Assert
     for (let i = 0; i < expected.length; i++) {
@@ -82,7 +79,7 @@ describe('textOutputParser', () => {
     const expected = getExpectedResult('no_tests') as IOpaTestResult[];
 
     // Act
-    const results = textOutputParser(output, cwd, uri);
+    const results = textOutputParser(output);
 
     // Assert
     assert.strictEqual(results.size, expected.length);
@@ -93,7 +90,7 @@ describe('textOutputParser', () => {
     const expected = getExpectedResult('todo') as IOpaTestResult[];
 
     // Act
-    const results = textOutputParser(output, cwd, uri);
+    const results = textOutputParser(output);
 
     // Assert
     for (let i = 0; i < expected.length; i++) {
@@ -108,7 +105,7 @@ describe('textOutputParser', () => {
     const expected = getExpectedResult('all') as IOpaTestResult[];
 
     // Act
-    const results = textOutputParser(output, cwd, uri);
+    const results = textOutputParser(output);
 
     // Assert
     for (let i = 0; i < expected.length; i++) {

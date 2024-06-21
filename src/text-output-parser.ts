@@ -4,11 +4,7 @@ const ERROR_REGEX = /^\d+ error(s)? occurred during loading:/;
 const ALL_REGEX =
   /(?<query>[^\S\r\n]{2}.*)|(?<failures>FAILURES)?(?<summary>SUMMARY)?(?<line>-+)?((?<file>(.+\/.+)):)?((?<testId>(.+)): (?<outcome>PASS|FAIL|SKIPPED)( \((?<duration>\d+\.?\d*)(?<unit>µs|ms|s)\))?)?(?<total>(PASS|FAIL|SKIPPED): ((\d+)\/(\d+)))?/gm;
 
-export const textOutputParser = (
-  content: string,
-  cwd: string | undefined,
-  uri: IUri | undefined,
-): Map<string, IOpaTestResult> => {
+export const textOutputParser = (content: string): Map<string, IOpaTestResult> => {
   let results = new Map<string, IOpaTestResult>();
   let match: RegExpExecArray | null;
   let currentFile: string = '';
