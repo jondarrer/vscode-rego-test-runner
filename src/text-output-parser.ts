@@ -81,7 +81,7 @@ export const textOutputParser = (content: string): Map<string, IOpaTestResult> =
         currentResult.location = { file: currentFile };
       }
     } else if (query && currentResult) {
-      currentResult.output.push(query);
+      currentResult.output?.push(query);
     }
   }
 

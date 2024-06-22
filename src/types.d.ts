@@ -509,7 +509,7 @@ export interface IOpaTestResult {
   fail?: boolean;
   skip?: boolean;
   duration: number;
-  output: string[];
+  output?: string[];
 }
 
 export interface INote {
