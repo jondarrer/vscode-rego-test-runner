@@ -7,7 +7,12 @@
     "name": "test_post_allowed",
     "fail": true,
     "duration": 3.154625,
-    "output": "  query:1                                             Enter data.failed.all_failed_1_test.test_post_allowed = _\n  sample/policies/failed/all_failed_1_test.rego:7     | Enter data.failed.all_failed_1_test.test_post_allowed\n  sample/policies/failed/all_failed_1_test.rego:8     | | Fail not data.failed.sample.allow with input as {\"method\": \"POST\", \"path\": [\"users\"]}\n  query:1                                             | Fail data.failed.all_failed_1_test.test_post_allowed = _"
+    "output": [
+      "  query:1                                             Enter data.failed.all_failed_1_test.test_post_allowed = _",
+      "  sample/policies/failed/all_failed_1_test.rego:7     | Enter data.failed.all_failed_1_test.test_post_allowed",
+      "  sample/policies/failed/all_failed_1_test.rego:8     | | Fail not data.failed.sample.allow with input as {\"method\": \"POST\", \"path\": [\"users\"]}",
+      "  query:1                                             | Fail data.failed.all_failed_1_test.test_post_allowed = _"
+    ]
   },
   {
     "location": {
@@ -17,7 +22,12 @@
     "name": "test_post_allowed",
     "fail": true,
     "duration": 0.08608299999999999,
-    "output": "  query:1                                             Enter data.failed.all_failed_2_test.test_post_allowed = _\n  sample/policies/failed/all_failed_2_test.rego:7     | Enter data.failed.all_failed_2_test.test_post_allowed\n  sample/policies/failed/all_failed_2_test.rego:8     | | Fail not data.failed.sample.allow with input as {\"method\": \"POST\", \"path\": [\"users\"]}\n  query:1                                             | Fail data.failed.all_failed_2_test.test_post_allowed = _"
+    "output": [
+      "  query:1                                             Enter data.failed.all_failed_2_test.test_post_allowed = _",
+      "  sample/policies/failed/all_failed_2_test.rego:7     | Enter data.failed.all_failed_2_test.test_post_allowed",
+      "  sample/policies/failed/all_failed_2_test.rego:8     | | Fail not data.failed.sample.allow with input as {\"method\": \"POST\", \"path\": [\"users\"]}",
+      "  query:1                                             | Fail data.failed.all_failed_2_test.test_post_allowed = _"
+    ]
   },
   {
     "location": {
@@ -27,6 +37,11 @@
     "name": "test_get_anonymous_denied",
     "fail": true,
     "duration": 0.058625,
-    "output": "  query:1                                              Enter data.failed.all_failed_2_test.test_get_anonymous_denied = _\n  sample/policies/failed/all_failed_2_test.rego:11     | Enter data.failed.all_failed_2_test.test_get_anonymous_denied\n  sample/policies/failed/all_failed_2_test.rego:12     | | Fail data.failed.sample.allow with input as {\"method\": \"GET\", \"path\": [\"users\"]}\n  query:1                                              | Fail data.failed.all_failed_2_test.test_get_anonymous_denied = _"
+    "output": [
+      "  query:1                                              Enter data.failed.all_failed_2_test.test_get_anonymous_denied = _",
+      "  sample/policies/failed/all_failed_2_test.rego:11     | Enter data.failed.all_failed_2_test.test_get_anonymous_denied",
+      "  sample/policies/failed/all_failed_2_test.rego:12     | | Fail data.failed.sample.allow with input as {\"method\": \"GET\", \"path\": [\"users\"]}",
+      "  query:1                                              | Fail data.failed.all_failed_2_test.test_get_anonymous_denied = _"
+    ]
   }
 ]

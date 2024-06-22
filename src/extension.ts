@@ -17,7 +17,16 @@ export async function activate(context: vscode.ExtensionContext) {
   fileChangedEmitter.event((uri) => {
     // Get the config again, as it may have changed since the plugin was activated
     const { cwd, policyTestDir, opaCommand } = getConfig();
-    handleFileChanged(controller, vscode.TestRunRequest, uri, watchedTests, cwd, policyTestDir, opaCommand);
+    handleFileChanged(
+      controller,
+      vscode.TestRunRequest,
+      uri,
+      watchedTests,
+      cwd,
+      policyTestDir,
+      vscode.TestMessage,
+      opaCommand,
+    );
   });
 
   controller.refreshHandler = async () => {
@@ -74,7 +83,7 @@ export async function activate(context: vscode.ExtensionContext) {
     'Run Tests',
     vscode.TestRunProfileKind.Run,
     (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) =>
-      handleRunRequest(controller, request, cancellation, getConfig, watchedTests),
+      handleRunRequest(controller, request, cancellation, getConfig, watchedTests, vscode.TestMessage),
     true,
     undefined,
     true,

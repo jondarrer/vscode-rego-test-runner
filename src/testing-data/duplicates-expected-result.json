@@ -5,6 +5,7 @@
     },
     "package": "data.duplicates.all_duplicates_1_test",
     "name": "test_post_allowed",
+    "output": [],
     "duration": 4.56875
   },
   {
@@ -13,6 +14,7 @@
     },
     "package": "data.duplicates.all_duplicates_1_test",
     "name": "test_get_anonymous_denied",
+    "output": [],
     "duration": 0.056625
   },
   {
@@ -21,6 +23,7 @@
     },
     "package": "data.duplicates.all_duplicates_1_test",
     "name": "test_post_allowed#01",
+    "output": [],
     "duration": 0.059917000000000005
   },
   {
@@ -31,6 +34,11 @@
     "name": "test_get_anonymous_denied#01",
     "fail": true,
     "duration": 0.045583,
-    "output": "  query:1                                                              Enter data.duplicates.all_duplicates_1_test[\"test_get_anonymous_denied#01\"] = _\n  sample/policies/duplicates/all_duplicates_2_test.rego:11     | Enter data.duplicates.all_duplicates_1_test[\"test_get_anonymous_denied#01\"]\n  sample/policies/duplicates/all_duplicates_2_test.rego:12     | | Fail data.duplicates.sample.allow with input as {\"method\": \"GET\", \"path\": [\"users\"]}\n  query:1                                                              | Fail data.duplicates.all_duplicates_1_test[\"test_get_anonymous_denied#01\"] = _"
+    "output": [
+      "  query:1                                                              Enter data.duplicates.all_duplicates_1_test[\"test_get_anonymous_denied#01\"] = _",
+      "  sample/policies/duplicates/all_duplicates_2_test.rego:11     | Enter data.duplicates.all_duplicates_1_test[\"test_get_anonymous_denied#01\"]",
+      "  sample/policies/duplicates/all_duplicates_2_test.rego:12     | | Fail data.duplicates.sample.allow with input as {\"method\": \"GET\", \"path\": [\"users\"]}",
+      "  query:1                                                              | Fail data.duplicates.all_duplicates_1_test[\"test_get_anonymous_denied#01\"] = _"
+    ]
   }
 ]

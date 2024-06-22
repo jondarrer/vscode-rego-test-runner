@@ -8,7 +8,15 @@ export const textOutputParser = (content: string): Map<string, IOpaTestResult> =
   let results = new Map<string, IOpaTestResult>();
   let match: RegExpExecArray | null;
   let currentFile: string = '';
-  let currentResult: any;
+  let currentResult: IOpaTestResult = {
+    name: '',
+    package: '',
+    output: [],
+    location: {
+      file: '',
+    },
+    duration: 0,
+  };
 
   // If we didn't get any results, see whether we received an
   // error
@@ -30,7 +38,7 @@ export const textOutputParser = (content: string): Map<string, IOpaTestResult> =
       currentFile = file;
     } else if (testId) {
       if (results.has(testId)) {
-        currentResult = results.get(testId);
+        currentResult = results.get(testId) as IOpaTestResult;
       } else {
         const [name, ...rest] = testId.split('.').reverse();
         const packageName = [...rest].reverse().join('.');
@@ -38,6 +46,11 @@ export const textOutputParser = (content: string): Map<string, IOpaTestResult> =
         currentResult = {
           name,
           package: packageName,
+          output: [],
+          location: {
+            file: '',
+          },
+          duration: 0,
         };
         results.set(testId, currentResult);
         switch (outcome) {
@@ -67,12 +80,13 @@ export const textOutputParser = (content: string): Map<string, IOpaTestResult> =
       if (currentFile) {
         currentResult.location = { file: currentFile };
       }
-    } else if (query) {
-      if (currentResult.output) {
-        currentResult.output += `\n${query}`;
-      } else {
-        currentResult.output = `${query}`;
-      }
+    } else if (query && currentResult) {
+      currentResult?.output.push(query);
+      // if (currentResult.output) {
+      //   currentResult.output += `${query}\r\n`;
+      // } else {
+      //   currentResult.output = `${query}\r\n`;
+      // }
     }
   }
 

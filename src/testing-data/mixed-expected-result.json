@@ -5,6 +5,7 @@
     },
     "package": "data.mixed.all_mixed_1_test",
     "name": "test_post_allowed",
+    "output": [],
     "duration": 1.298875
   },
   {
@@ -15,7 +16,12 @@
     "name": "test_get_anonymous_denied",
     "fail": true,
     "duration": 0.066042,
-    "output": "  query:1                                            Enter data.mixed.all_mixed_1_test.test_get_anonymous_denied = _\n  sample/policies/mixed/all_mixed_1_test.rego:11     | Enter data.mixed.all_mixed_1_test.test_get_anonymous_denied\n  sample/policies/mixed/all_mixed_1_test.rego:12     | | Fail data.mixed.sample.allow with input as {\"method\": \"GET\", \"path\": [\"users\"]}\n  query:1                                            | Fail data.mixed.all_mixed_1_test.test_get_anonymous_denied = _"
+    "output": [
+      "  query:1                                            Enter data.mixed.all_mixed_1_test.test_get_anonymous_denied = _",
+      "  sample/policies/mixed/all_mixed_1_test.rego:11     | Enter data.mixed.all_mixed_1_test.test_get_anonymous_denied",
+      "  sample/policies/mixed/all_mixed_1_test.rego:12     | | Fail data.mixed.sample.allow with input as {\"method\": \"GET\", \"path\": [\"users\"]}",
+      "  query:1                                            | Fail data.mixed.all_mixed_1_test.test_get_anonymous_denied = _"
+    ]
   },
   {
     "location": {
@@ -25,7 +31,12 @@
     "name": "test_post_allowed",
     "fail": true,
     "duration": 0.06866599999999999,
-    "output": "  query:1                                           Enter data.mixed.all_mixed_2_test.test_post_allowed = _\n  sample/policies/mixed/all_mixed_2_test.rego:7     | Enter data.mixed.all_mixed_2_test.test_post_allowed\n  sample/policies/mixed/all_mixed_2_test.rego:8     | | Fail not data.mixed.sample.allow with input as {\"method\": \"POST\", \"path\": [\"users\"]}\n  query:1                                           | Fail data.mixed.all_mixed_2_test.test_post_allowed = _"
+    "output": [
+      "  query:1                                           Enter data.mixed.all_mixed_2_test.test_post_allowed = _",
+      "  sample/policies/mixed/all_mixed_2_test.rego:7     | Enter data.mixed.all_mixed_2_test.test_post_allowed",
+      "  sample/policies/mixed/all_mixed_2_test.rego:8     | | Fail not data.mixed.sample.allow with input as {\"method\": \"POST\", \"path\": [\"users\"]}",
+      "  query:1                                           | Fail data.mixed.all_mixed_2_test.test_post_allowed = _"
+    ]
   },
   {
     "location": {
@@ -33,6 +44,7 @@
     },
     "package": "data.mixed.all_mixed_2_test",
     "name": "test_get_anonymous_denied",
+    "output": [],
     "duration": 0.059708
   }
 ]

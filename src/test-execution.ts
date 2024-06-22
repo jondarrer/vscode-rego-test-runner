@@ -14,7 +14,6 @@ import {
   ITestRunRequest,
   IUri,
 } from './types';
-import { TestMessage } from './test-classes';
 import { textOutputParser } from './text-output-parser';
 import { Newable } from './vscode-classes';
 
@@ -24,12 +23,13 @@ export const handleRunRequest = (
   cancellation: ICancellationToken,
   getConfig: IGetConfigFunc,
   watchedTests: Map<ITestItem | 'ALL', ITestRunProfile | undefined>,
+  TestMessage: Newable<ITestMessage>,
 ) => {
   // If the request is a regular, ad-hoc request to run tests immediately,
   // then start a new test run.
   if (!request.continuous) {
     const { cwd, policyTestDir, opaCommand, showEnhancedErrors } = getConfig();
-    startTestRun(controller, request, cwd, policyTestDir, opaCommand, showEnhancedErrors);
+    startTestRun(controller, request, cwd, policyTestDir, TestMessage, opaCommand, showEnhancedErrors);
   } else {
     // When dealing with a request to continouly run tests as files change,
     // we add these files to those which we're watching. Then, when a file
@@ -54,6 +54,7 @@ export const handleFileChanged = (
   watchedTests: Map<ITestItem | 'ALL', ITestRunProfile | undefined>,
   cwd: string | undefined,
   policyTestDir: string,
+  TestMessage: Newable<ITestMessage>,
   opaCommand?: string,
 ): void => {
   if (watchedTests.has('ALL')) {
@@ -62,6 +63,7 @@ export const handleFileChanged = (
       new TestRunRequest(undefined, undefined, watchedTests.get('ALL'), true),
       cwd,
       policyTestDir,
+      TestMessage,
       opaCommand,
     );
     return;
@@ -78,7 +80,14 @@ export const handleFileChanged = (
   }
 
   if (include.length) {
-    startTestRun(controller, new TestRunRequest(include, undefined, profile, true), cwd, policyTestDir, opaCommand);
+    startTestRun(
+      controller,
+      new TestRunRequest(include, undefined, profile, true),
+      cwd,
+      policyTestDir,
+      TestMessage,
+      opaCommand,
+    );
   }
 };
 
@@ -87,6 +96,7 @@ export const startTestRun = async (
   request: ITestRunRequest,
   cwd: string | undefined,
   policyTestDir: string,
+  TestMessage: Newable<ITestMessage>,
   opaCommand: string = 'opa',
   showEnhancedErrors: boolean = false,
 ) => {
@@ -99,7 +109,16 @@ export const startTestRun = async (
   });
 
   const queue = placeTestsInQueue(items, request, testRun);
-  await runTestQueue(testRun, queue, cwd, policyTestDir, opaCommand, showEnhancedErrors);
+  await runTestQueue(
+    testRun,
+    queue,
+    cwd,
+    policyTestDir,
+    opaCommand,
+    showEnhancedErrors,
+    request.include === undefined,
+    TestMessage,
+  );
 };
 
 export const placeTestsInQueue = (
@@ -141,20 +160,54 @@ export const runTestQueue = async (
   policyTestDir: string,
   opaCommand: string = 'opa',
   showEnhancedErrors: boolean,
+  runAllAtOnce: boolean = false,
+  TestMessage: Newable<ITestMessage>,
 ) => {
+  let actual: IOpaTestResult | undefined;
+  let results: Map<string, IOpaTestResult> | undefined = undefined;
+
+  try {
+    if (runAllAtOnce) {
+      testRun.appendOutput(`Running all tests at once\r\n`);
+      results = await runTests(undefined, testRun, cwd, policyTestDir, opaCommand, showEnhancedErrors);
+      testRun.appendOutput(`Completed running all ${results !== undefined ? results.size : 0} tests\r\n`);
+    }
+  } catch (error) {
+    testRun.appendOutput((error as Error).message);
+    testRun.end();
+  }
+
   for (const item of queue) {
-    testRun.appendOutput(`Running ${item.id}\r\n`);
+    const testId = item.id;
+    const messages: ITestMessage[] = [];
     if (testRun.token.isCancellationRequested) {
       testRun.skipped(item);
     } else {
       testRun.started(item);
       try {
-        await runTests(item, testRun, cwd, policyTestDir, opaCommand, showEnhancedErrors);
+        actual = results?.get(testId);
+        if (actual === undefined) {
+          testRun.appendOutput(`Running individual test ${testId}\r\n`);
+          results = await runTests(item, testRun, cwd, policyTestDir, opaCommand, showEnhancedErrors);
+          testRun.appendOutput(`Completed individual test ${testId}\r\n`);
+          actual = results?.get(testId);
+        }
+        if (actual && actual.output) {
+          messages.push(new TestMessage(actual.output.map((output) => output.replaceAll('\n', '')).join('\r\n')));
+        }
+        if (actual && actual.fail === true) {
+          testRun.failed(item, messages, actual.duration);
+        } else if (actual && actual.skip === true) {
+          testRun.skipped(item);
+        } else if (actual) {
+          testRun.passed(item, actual.duration);
+        } else {
+          testRun.failed(item, messages, 0);
+        }
       } catch (error) {
         testRun.failed(item, new TestMessage((error as Error).message), 0);
       }
     }
-    testRun.appendOutput(`Completed ${item.id}\r\n`);
   }
 
   testRun.end();
@@ -216,23 +269,15 @@ export const convertResults = (
   }
 };
 
-export const extractResult = (
-  results: IOpaTestResult[] | undefined,
-  testId: string | undefined,
-): IOpaTestResult | undefined => {
-  return results?.find((result) => `${result.package}.${result.name}` === testId);
-};
-
 export const runTests = async (
-  item: ITestItem,
+  item: ITestItem | undefined,
   testRun: ITestRun,
   cwd: string | undefined,
   policyTestDir: string,
   opaCommand: string = 'opa',
   showEnhancedErrors: boolean,
-): Promise<IOpaTestResult | undefined> => {
-  const start = new Date();
-  const testId = item.id;
+): Promise<Map<string, IOpaTestResult> | undefined> => {
+  const testId = item?.id;
   let opaTestProcess: ChildProcessWithoutNullStreams;
 
   return new Promise((resolve, reject) => {
@@ -256,60 +301,22 @@ export const runTests = async (
         opaErrorOutput.push(chunk.toString());
       });
 
-      opaTestProcess.on('close', (code: number | null, signal: NodeJS.Signals | null) => {
-        const end = new Date();
+      opaTestProcess.on('close', (_code: number | null, _signal: NodeJS.Signals | null) => {
         if (opaErrorOutput.length > 0) {
-          testRun.appendOutput(opaErrorOutput.join(), undefined, item);
+          opaErrorOutput.forEach((err) => testRun.appendOutput(`${err}\r\n`, undefined, item));
+          // testRun.appendOutput(opaErrorOutput.join(''), undefined, item);
         }
 
-        const actual = processTestResult(
-          opaTestOutput,
-          opaErrorOutput,
-          end.getTime() - start.getTime(),
-          item,
-          testRun,
-          showEnhancedErrors,
-        );
-        resolve(actual);
+        const results = convertResults(testRun, opaTestOutput.join(''), showEnhancedErrors);
+        if (!item) {
+          // testRun.appendOutput(opaTestOutput.join('').replace('\n', '\r\n'));
+          opaTestOutput.forEach((msg) => testRun.appendOutput(`${msg.replaceAll('\n', '\r\n')}`));
+        }
+        resolve(results);
       });
       opaTestProcess.unref();
     } catch (error) {
-      item.error = (error as Error).message;
       reject(error);
     }
   });
-};
-
-export const processTestResult = (
-  opaTestOutput: string[],
-  opaErrorOutput: string[],
-  duration: number,
-  item: ITestItem,
-  testRun: ITestRun,
-  showEnhancedErrors: boolean,
-): IOpaTestResult | undefined => {
-  const messages: ITestMessage[] = [];
-  const testId = item.id;
-  const results = convertResults(testRun, opaTestOutput.join(), showEnhancedErrors);
-  if (opaErrorOutput.length > 0) {
-    messages.push(new TestMessage(opaErrorOutput.join()));
-  }
-  let actual: IOpaTestResult | undefined;
-  if (results) {
-    actual = results.has(testId) ? results.get(testId) : undefined;
-  }
-  if (actual && actual.output) {
-    messages.push(new TestMessage(actual.output));
-  }
-  if (actual && actual.fail === true) {
-    testRun.failed(item, messages, duration);
-  } else if (actual && actual.skip === true) {
-    testRun.skipped(item);
-  } else if (actual) {
-    testRun.passed(item, duration);
-  } else {
-    testRun.failed(item, messages, duration);
-  }
-
-  return actual;
 };
