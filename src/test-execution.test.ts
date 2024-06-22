@@ -145,7 +145,7 @@ describe('handleRunRequest', () => {
     testFilePatterns: [],
     policyTestDir: '.',
     opaCommand: 'opa',
-    showEnhancedErrors: false,
+    showEnhancedErrors: true,
   });
 
   it('should start running tests if an ad-hoc (non-continuous) request is made', () => {

@@ -91,8 +91,8 @@
         "regoTest.showEnhancedErrors": {
           "type": "boolean",
           "scope": "window",
-          "default": false,
-          "description": "Shows errors by running tests in text output mode, rather than JSON. This is experimental, and not battle tested, so is off by default"
+          "default": true,
+          "description": "Shows errors by running tests in text output mode, rather than JSON. This is preferred as it gives error details for failing tests"
         }
       }
     }

@@ -280,7 +280,7 @@ describe('setupFileSystemWatchers', () => {
     testFilePatterns,
     policyTestDir: '.',
     opaCommand: 'opa',
-    showEnhancedErrors: false,
+    showEnhancedErrors: true,
   });
   const onDidCreate = mock.fn(
     (listener: (e: IUri) => any, thisArgs?: any, disposables?: IDisposable[]): IDisposable => {

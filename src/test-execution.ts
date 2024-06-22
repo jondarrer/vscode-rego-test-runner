@@ -98,7 +98,7 @@ export const startTestRun = async (
   policyTestDir: string,
   TestMessage: Newable<ITestMessage>,
   opaCommand: string = 'opa',
-  showEnhancedErrors: boolean = false,
+  showEnhancedErrors: boolean = true,
 ) => {
   const testRun = controller.createTestRun(request);
   const items: ITestItem[] = [];
