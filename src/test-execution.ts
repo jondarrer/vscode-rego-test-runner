@@ -192,7 +192,7 @@ export const runTestQueue = async (
           testRun.appendOutput(`Completed individual test ${testId}\r\n`);
           actual = results?.get(testId);
         }
-        if (actual && actual.output) {
+        if (actual && actual.output?.length > 0) {
           messages.push(new TestMessage(actual.output.map((output) => output.replaceAll('\n', '')).join('\r\n')));
         }
         if (actual && actual.fail === true) {
