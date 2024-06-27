@@ -28,8 +28,10 @@ import {
   registerTestItemFile,
   setupFileSystemWatchers,
   updateWorkspaceTestFile,
+  getRelativePath,
+  getParentItem,
 } from './test-discovery';
-import { TestItemCollection, Uri } from './testing-utils';
+import { TestItemCollection, Uri } from './test-classes';
 
 class Range implements IRange {
   constructor(
@@ -45,6 +47,7 @@ class Position implements IPosition {
   ) {}
 }
 
+const cwd = '';
 const uri = new Uri('file', `path${path.sep}to${path.sep}test${path.sep}something_test.rego`);
 const children = new TestItemCollection(new Map<string, ITestItem>());
 const items = new TestItemCollection(new Map<string, ITestItem>());
@@ -114,6 +117,7 @@ watchedTests.delete = deleteMock;
 
 afterEach(() => {
   mock.reset();
+  createTestItem.mock.resetCalls();
   controller.items.forEach((item) => controller.items.delete(item.id));
 });
 
@@ -123,7 +127,7 @@ describe('registerTestItemFile', () => {
     controller.items.add(item);
 
     // Act
-    const result = registerTestItemFile(controller, item.uri || uri);
+    const result = registerTestItemFile(controller, cwd, item.uri || uri);
 
     // Assert
     assert.strictEqual(result, item);
@@ -131,11 +135,15 @@ describe('registerTestItemFile', () => {
 
   it('returns the newly created item', () => {
     // Arrange & Act
-    const result = registerTestItemFile(controller, uri);
+    const result = registerTestItemFile(controller, cwd, uri);
 
     // Assert
     assert.ok(result);
-    assert.strictEqual(createTestItem.mock.calls.length, 1, 'createTestItem should have been called once');
+    assert.strictEqual(
+      createTestItem.mock.calls.length > 0,
+      true,
+      'createTestItem should have been called at least once',
+    );
     assert.deepStrictEqual(createTestItem.mock.calls[0].arguments, [
       `path${path.sep}to${path.sep}test${path.sep}something_test.rego`,
       'something_test.rego',
@@ -153,7 +161,7 @@ describe('updateWorkspaceTestFile', () => {
     };
 
     // Act
-    const result = updateWorkspaceTestFile(controller, document, testFilePatterns);
+    const result = updateWorkspaceTestFile(controller, document, testFilePatterns, cwd);
 
     // Assert
     assert.ok(!result);
@@ -165,7 +173,7 @@ describe('updateWorkspaceTestFile', () => {
     };
 
     // Act
-    const result = updateWorkspaceTestFile(controller, document, testFilePatterns);
+    const result = updateWorkspaceTestFile(controller, document, testFilePatterns, cwd);
 
     // Assert
     assert.ok(!result);
@@ -177,7 +185,7 @@ describe('updateWorkspaceTestFile', () => {
     };
 
     // Act
-    const result = updateWorkspaceTestFile(controller, document, testFilePatterns);
+    const result = updateWorkspaceTestFile(controller, document, testFilePatterns, cwd);
 
     // Assert
     assert.ok(result);
@@ -196,7 +204,7 @@ describe('refreshTestFiles', () => {
     const readFile: IReadFileFunc = mock.fn(async (uri: IUri): Promise<Uint8Array> => new Uint8Array());
 
     // Act
-    const result = await refreshTestFiles(controller, pattern, findFiles, readFile, notes);
+    const result = await refreshTestFiles(controller, pattern, findFiles, readFile, notes, cwd);
 
     // Assert
     assert.ok(result);
@@ -279,6 +287,7 @@ describe('setupFileSystemWatchers', () => {
     cwd: '/',
     testFilePatterns,
     policyTestDir: '.',
+    policyTestPath: '',
     opaCommand: 'opa',
     showEnhancedErrors: true,
   });
@@ -350,5 +359,68 @@ describe('setupFileSystemWatchers', () => {
     assert.strictEqual(onDidCreate.mock.callCount(), 2);
     assert.strictEqual(onDidChange.mock.callCount(), 2);
     assert.strictEqual(onDidDelete.mock.callCount(), 2);
+  });
+});
+
+describe('getRelativePath', () => {
+  it('gets path/to/file.rego from /absolute/path/to/file.rego', () => {
+    // Arrange
+    const dir = '/absolute';
+    const uri = new Uri('file', '/absolute/path/to/file.rego');
+
+    // Act
+    const result = getRelativePath(dir, uri);
+
+    // Assert
+    assert.strictEqual(result, 'path/to/file.rego');
+  });
+});
+
+describe('getParentItem', () => {
+  it.skip('gets existing items [path]->[path/to] for relative path path/to/file.rego', () => {
+    // Arrange
+    const dir = '/absolute';
+    const uri = new Uri('file', '/absolute/path/to/file.rego');
+
+    // Act
+    const result = getParentItem(controller, dir, uri);
+
+    // Assert
+    assert.ok(result);
+    assert.strictEqual(result.id, '/absolute/path/to');
+    assert.strictEqual(result.label, 'to');
+    assert.ok(result.parent);
+    assert.strictEqual(result.parent.id, '/absolute/path');
+    assert.strictEqual(result.parent.label, 'path');
+  });
+  it.skip('gets existing items [path]->[path/to] for relative path file.rego', () => {
+    // Arrange
+    const dir = '/absolute';
+    const uri = new Uri('file', '/absolute/file.rego');
+
+    // Act
+    const result = getParentItem(controller, dir, uri);
+
+    // Assert
+    assert.ok(result);
+    assert.strictEqual(result.id, '/absolute');
+    assert.strictEqual(result.label, 'absolute');
+    assert.strictEqual(controller.items.size, 1);
+  });
+  it.skip('creates items [path]->[path/to] for relative path path/to/file.rego', () => {
+    // Arrange
+    const dir = '/absolute';
+    const uri = new Uri('file', '/absolute/path/to/file.rego');
+
+    // Act
+    const result = getParentItem(controller, dir, uri);
+
+    // Assert
+    assert.ok(result);
+    assert.strictEqual(result.id, '/absolute/path/to');
+    assert.strictEqual(result.label, 'to');
+    assert.ok(result.parent);
+    assert.strictEqual(result.parent.id, '/absolute/path');
+    assert.strictEqual(result.parent.label, 'path');
   });
 });

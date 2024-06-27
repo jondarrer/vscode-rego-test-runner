@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { textOutputParser } from './text-output-parser';
-import { IOpaTestResult, IUri } from './types';
-import { getExpectedResult, getTestingData, Uri } from './testing-utils';
+import { IOpaTestResult } from './types';
+import { getExpectedResult, getTestingData } from './testing-utils';
 
 describe('textOutputParser', () => {
   it('parses passed tests', () => {

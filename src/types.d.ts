@@ -82,7 +82,7 @@ export interface ITestItemCollection {
    * @param itemId — Item ID to delete.
    */
   delete(itemId: string): void;
-  // [Symbol.iterator]: () => Iterator<[id: string, testItem: ITestItem], any, undefined>;
+  [Symbol.iterator]: () => Iterator<[id: string, testItem: ITestItem], any, undefined>;
 }
 
 export interface ITestItem {
@@ -493,6 +493,7 @@ export interface IGetConfigFunc {
     cwd: string | undefined;
     testFilePatterns: string[];
     policyTestDir: string;
+    policyTestPath: string;
     opaCommand: string;
     showEnhancedErrors: boolean;
   };

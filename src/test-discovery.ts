@@ -26,6 +26,7 @@ export const updateWorkspaceTestFile = (
   controller: ITestController,
   document: ITextDocument,
   testFilePatterns: string[],
+  policyTestPath: string,
 ): ITestItem | undefined => {
   if (document.uri.scheme !== 'file') {
     return;
@@ -35,17 +36,27 @@ export const updateWorkspaceTestFile = (
     return;
   }
 
-  return registerTestItemFile(controller, document.uri);
+  return registerTestItemFile(controller, policyTestPath, document.uri);
 };
 
-export const registerTestItemFile = (controller: ITestController, uri: IUri): ITestItem => {
-  const existing = controller.items.get(uri.fsPath);
+export const createTestItemFile = (controller: ITestController, uri: IUri): ITestItem => {
+  const existing = getItem(controller.items, uri);
+
   if (existing) {
     return existing;
   }
 
   const item = controller.createTestItem(uri.fsPath, uri.fsPath.split(path.sep).pop()!, uri);
-  controller.items.add(item);
+
+  return item;
+};
+
+export const registerTestItemFile = (controller: ITestController, policyTestPath: string, uri: IUri): ITestItem => {
+  const item = createTestItemFile(controller, uri);
+  const parent = getParentItem(controller, policyTestPath, uri);
+
+  parent?.children.add(item);
+
   return item;
 };
 
@@ -97,8 +108,11 @@ export const refreshTestFiles = async (
   findFiles: IFindFilesFunc,
   readFile: IReadFileFunc,
   notes: INote[],
+  policyTestPath: string,
 ): Promise<ITestItem[]> => {
-  return Promise.all((await findFiles(pattern)).map(async (uri) => refreshTestFile(controller, uri, readFile, notes)));
+  return Promise.all(
+    (await findFiles(pattern)).map(async (uri) => refreshTestFile(controller, uri, readFile, notes, policyTestPath)),
+  );
 };
 
 export const refreshTestFile = async (
@@ -106,11 +120,12 @@ export const refreshTestFile = async (
   uri: IUri,
   readFile: IReadFileFunc,
   notes: INote[],
+  policyTestPath: string,
 ): Promise<ITestItem> => {
-  const item = registerTestItemFile(controller, uri);
-
+  const item = registerTestItemFile(controller, policyTestPath, uri);
   const rawContent = await readFile(uri);
   const content = textDecoder.decode(rawContent);
+
   registerTestItemCasesFromFile(controller, item, content, notes);
 
   return item;
@@ -124,20 +139,65 @@ export const setupFileSystemWatchers = (
   getConfig: IGetConfigFunc,
   notes: INote[],
 ): IFileSystemWatcher[] => {
-  const { testFilePatterns } = getConfig();
+  const { testFilePatterns, policyTestPath } = getConfig();
   return testFilePatterns.map((testFilePattern) => {
     const watcher = createFileSystemWatcher(testFilePattern);
 
     watcher.onDidCreate((uri) => {
-      registerTestItemFile(controller, uri);
+      registerTestItemFile(controller, policyTestPath, uri);
       fileChangedEmitter.fire(uri);
     });
     watcher.onDidChange(async (uri) => {
-      await refreshTestFile(controller, uri, readFile, notes);
+      await refreshTestFile(controller, uri, readFile, notes, policyTestPath);
       fileChangedEmitter.fire(uri);
     });
     watcher.onDidDelete((uri) => controller.items.delete(uri.toString()));
 
     return watcher;
   });
+};
+
+export const getRelativePath = (dir: string, uri: IUri): string => {
+  return path.relative(dir, uri.fsPath);
+};
+
+export const getItem = (children: ITestItemCollection, uri: IUri): ITestItem | undefined => {
+  const item = children.get(uri.fsPath);
+  if (item) {
+    return item;
+  } else {
+    for (let [_id, child] of children) {
+      const other = getItem(child.children, uri);
+      if (other) {
+        return other;
+      }
+    }
+  }
+};
+
+export const getParentItem = (controller: ITestController, dir: string, uri: IUri): ITestItem | undefined => {
+  const relativePath = getRelativePath(dir, uri);
+  const pathParts = relativePath.split(path.sep);
+
+  if (pathParts.length > 0) {
+    // if pathParts is ['path', 'to', 'file.rego'], we want a new uri of ${dir}/path/to with label to
+    pathParts.pop();
+    const newPath = path.join(dir, pathParts.join(path.sep));
+    const newUri = uri.with({ path: newPath });
+    const item = createTestItemFile(controller, newUri);
+    let parent: ITestItem | undefined = undefined;
+    if (pathParts.length > 0) {
+      parent = getParentItem(controller, dir, newUri);
+    }
+
+    if (parent) {
+      parent.children.add(item);
+      // The parent property is automatically set for the child when it is added to the list of children
+      // item.parent = parent;
+    } else {
+      controller.items.add(item);
+    }
+
+    return item;
+  }
 };

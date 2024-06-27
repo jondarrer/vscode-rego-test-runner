@@ -1,4 +1,4 @@
-package mixed.all_mixed_2_test
+package mixed.all_mixed_1_test
 
 import rego.v1
 

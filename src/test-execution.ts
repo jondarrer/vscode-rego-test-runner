@@ -8,6 +8,7 @@ import {
   IOpaTestResult,
   ITestController,
   ITestItem,
+  ITestItemCollection,
   ITestMessage,
   ITestRun,
   ITestRunProfile,
@@ -101,14 +102,9 @@ export const startTestRun = async (
   showEnhancedErrors: boolean = true,
 ) => {
   const testRun = controller.createTestRun(request);
-  const items: ITestItem[] = [];
-
-  controller.items.forEach((item) => {
-    item.children.forEach((child) => items.push(child));
-    items.push(item);
-  });
-
+  const items = getAllDescendants(controller.items);
   const queue = placeTestsInQueue(items, request, testRun);
+
   await runTestQueue(
     testRun,
     queue,
@@ -121,27 +117,47 @@ export const startTestRun = async (
   );
 };
 
+export const getAllDescendants = (items: ITestItemCollection | ITestItem[]): ITestItem[] => {
+  const result: ITestItem[] = [];
+
+  for (let thing of items) {
+    let item: ITestItem;
+    if (Array.isArray(thing)) {
+      item = thing[1];
+    } else {
+      item = thing;
+    }
+    result.push(...getAllDescendants(item.children));
+    result.push(item);
+  }
+
+  return result;
+};
+
 export const placeTestsInQueue = (
-  items: Iterable<ITestItem>,
+  items: ITestItem[],
   request: ITestRunRequest,
   testRun: ITestRun,
   queue: ITestItem[] = [],
 ): ITestItem[] => {
   for (const item of items) {
-    // Is this item, or its parent NOT in any include list? This is only
+    const descendents = getAllAncestorsOf(item);
+    // Is this item, or its descendents NOT in any include list? This is only
     // relevant if we have an include list - like we do when a specific
     // test has been requested. We have an empty include list when all
     // tests are requested to be run.
-    if (request.include && !request.include.includes(item)) {
-      if (!item.parent || !request.include.includes(item.parent)) {
-        continue;
-      }
-    }
-
-    // Is this item, or its parent in any exlude list
-    if (request.exclude?.includes(item) || !item.parent || request.exclude?.includes(item?.parent)) {
+    if (
+      request.include &&
+      !request.include.includes(item) &&
+      !request.include.some((thing) => descendents.includes(thing))
+    ) {
       continue;
     }
+
+    // // Is this item, or its descendents in any exclude list
+    // if (request.exclude?.includes(item) || request.exclude?.every((thing) => descendents.includes(thing))) {
+    //   continue;
+    // }
 
     // Only deal with actual tests, not files or folders
     if (!item.uri?.fsPath.endsWith(item.label)) {
@@ -151,6 +167,18 @@ export const placeTestsInQueue = (
   }
 
   return queue;
+};
+
+export const getAllAncestorsOf = (item: ITestItem): ITestItem[] => {
+  const results: ITestItem[] = [];
+  let thing: ITestItem = item;
+
+  while (thing.parent !== undefined) {
+    results.push(thing.parent);
+    thing = thing.parent;
+  }
+
+  return results;
 };
 
 export const runTestQueue = async (

@@ -31,7 +31,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   controller.refreshHandler = async () => {
     // Get the config again, as it may have changed since the plugin was activated
-    const { testFilePatterns } = getConfig();
+    const { testFilePatterns, policyTestPath } = getConfig();
     const notes: INote[] = [];
 
     for (let testFilePattern of testFilePatterns) {
@@ -41,6 +41,7 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.workspace.findFiles,
         vscode.workspace.fs.readFile,
         notes,
+        policyTestPath,
       );
     }
 
@@ -49,6 +50,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   controller.resolveHandler = async (item: vscode.TestItem | undefined) => {
     const notes: INote[] = [];
+    const { policyTestPath } = getConfig();
 
     if (!item) {
       context.subscriptions.push(
@@ -70,10 +72,11 @@ export async function activate(context: vscode.ExtensionContext) {
           vscode.workspace.findFiles,
           vscode.workspace.fs.readFile,
           notes,
+          policyTestPath,
         );
       }
     } else if (item.uri) {
-      await refreshTestFile(controller, item.uri, vscode.workspace.fs.readFile, notes);
+      await refreshTestFile(controller, item.uri, vscode.workspace.fs.readFile, notes, policyTestPath);
     }
 
     displayNotes(notes, noteTracker);
@@ -93,13 +96,13 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument((document) => {
       // Get the config again, as it may have changed since the plugin was activated
-      const { testFilePatterns } = getConfig();
-      updateWorkspaceTestFile(controller, document, testFilePatterns);
+      const { testFilePatterns, policyTestPath } = getConfig();
+      updateWorkspaceTestFile(controller, document, testFilePatterns, policyTestPath);
     }),
     vscode.workspace.onDidChangeTextDocument((event) => {
       // Get the config again, as it may have changed since the plugin was activated
-      const { testFilePatterns } = getConfig();
-      updateWorkspaceTestFile(controller, event.document, testFilePatterns);
+      const { testFilePatterns, policyTestPath } = getConfig();
+      updateWorkspaceTestFile(controller, event.document, testFilePatterns, policyTestPath);
     }),
   );
 }
